@@ -59,6 +59,23 @@
   }
   select.lang option { background: #1e293b; color: #e2e8f0; }
 
+  .dd-btn { display:flex; align-items:center; gap:12px; width:100%; cursor:pointer; text-align:left;
+    border-radius:1rem; background:rgba(15,23,42,.6); border:1px solid rgba(71,85,105,.6); padding:10px 14px; font-weight:500;
+    color:#e2e8f0; transition:all .25s; }
+  .dd-btn:hover { background:rgba(15,23,42,.9); border-color:#818cf8; }
+  .dd-btn.open { border-color:#818cf8; box-shadow:0 0 24px -6px rgba(99,102,241,.7); }
+  .dd-btn .chev { margin-left:auto; transition:transform .3s; }
+  .dd-btn.open .chev { transform:rotate(180deg); }
+  .flag { width:28px; height:20px; border-radius:5px; object-fit:cover; box-shadow:0 0 0 1px rgba(255,255,255,.15); flex:none; }
+  .dd-menu { position:absolute; left:0; right:0; top:calc(100% + 8px); z-index:60; padding:6px; border-radius:1rem;
+    background:rgba(15,23,42,.92); border:1px solid rgba(129,140,248,.35); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    box-shadow:0 20px 60px -15px rgba(0,0,0,.8), 0 0 40px -10px rgba(99,102,241,.5);
+    opacity:0; transform:translateY(-6px) scale(.98); pointer-events:none; transition:all .2s; }
+  .dd-menu.show { opacity:1; transform:none; pointer-events:auto; }
+  .dd-item { display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; border-radius:.75rem; cursor:pointer; color:#cbd5e1; text-align:left; transition:background .15s; }
+  .dd-item:hover { background:rgba(99,102,241,.25); color:#fff; }
+  .dd-item.sel { background:rgba(99,102,241,.4); color:#fff; }
+
   textarea { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
   .out-text.fade { animation: fadeUp .45s ease both; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
@@ -166,11 +183,11 @@
 
   // ---------- Config ----------
   const LANGUAGES = [
-    { code: 'ru', name: 'Русский',   flag: '🇷🇺' },
-    { code: 'en', name: 'English',   flag: '🇬🇧' },
-    { code: 'kk', name: 'Қазақша',   flag: '🇰🇿' },
-    { code: 'de', name: 'Deutsch',   flag: '🇩🇪' },
-    { code: 'es', name: 'Español',   flag: '🇪🇸' },
+    { code: 'ru', name: 'Русский',   cc: 'ru' },
+    { code: 'en', name: 'English',   cc: 'gb' },
+    { code: 'kk', name: 'Қазақша',   cc: 'kz' },
+    { code: 'de', name: 'Deutsch',   cc: 'de' },
+    { code: 'es', name: 'Español',   cc: 'es' },
   ];
   const langName = c => LANGUAGES.find(l => l.code === c).name;
 
@@ -290,7 +307,7 @@
 
   // ---------- UI helpers ----------
   function fillSelect(sel, value) {
-    sel.innerHTML = LANGUAGES.map(l => `<option value="${l.code}">${l.flag}  ${l.name}</option>`).join('');
+    sel.innerHTML = LANGUAGES.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
     sel.value = value;
   }
 
@@ -311,7 +328,53 @@
     }
   }
 
+  // ---------- Custom language dropdowns with flag images ----------
+  const flagUrl = code => `https://flagcdn.com/w40/${LANGUAGES.find(l => l.code === code).cc}.png`;
+  const dropdowns = [];
+  function buildDropdown(sel) {
+    sel.style.display = 'none';
+    const wrap = sel.parentElement;
+    wrap.style.position = 'relative';
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'dd-btn';
+    const menu = document.createElement('div'); menu.className = 'dd-menu';
+    LANGUAGES.forEach(l => {
+      const it = document.createElement('button');
+      it.type = 'button'; it.className = 'dd-item'; it.dataset.code = l.code;
+      it.innerHTML = `<img class="flag" src="${flagUrl(l.code)}" alt=""><span>${l.name}</span>`;
+      it.addEventListener('click', () => {
+        close();
+        if (sel.value !== l.code) { sel.value = l.code; sel.dispatchEvent(new Event('change')); }
+      });
+      menu.appendChild(it);
+    });
+    const close = () => { menu.classList.remove('show'); btn.classList.remove('open'); };
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const willOpen = !menu.classList.contains('show');
+      dropdowns.forEach(d => d.close());
+      if (willOpen) { menu.classList.add('show'); btn.classList.add('open'); }
+    });
+    wrap.append(btn, menu);
+    const bar = wrap.parentElement; bar.style.position = 'relative'; bar.style.zIndex = 30;
+    const d = {
+      close,
+      sync() {
+        const l = LANGUAGES.find(x => x.code === sel.value);
+        btn.innerHTML = `<img class="flag" src="${flagUrl(l.code)}" alt=""><span class="truncate">${l.name}</span>` +
+          `<svg class="chev h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`;
+        menu.querySelectorAll('.dd-item').forEach(i => i.classList.toggle('sel', i.dataset.code === sel.value));
+      }
+    };
+    dropdowns.push(d);
+    return d;
+  }
+  document.addEventListener('click', () => dropdowns.forEach(d => d.close()));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') dropdowns.forEach(d => d.close()); });
+  buildDropdown(src); buildDropdown(tgt);
+
   function updateLabels() {
+    dropdowns.forEach(d => d.sync());
     $('srcLabel').textContent = langName(src.value);
     $('tgtLabel').textContent = langName(tgt.value);
   }
@@ -446,6 +509,7 @@
 </script>
 </body>
 </html>
+
 
 
 
