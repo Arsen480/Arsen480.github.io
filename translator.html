@@ -147,7 +147,7 @@
         <span class="text-slate-500">Перевод появится здесь…</span>
       </div>
       <div class="pt-3 border-t border-slate-700/40 text-xs text-slate-500 flex justify-between">
-        <span id="engine">MyMemory API</span>
+        <span></span>
         <span><span id="outCounter">0</span> симв.</span>
       </div>
     </section>
@@ -193,7 +193,7 @@
   const src = $('srcLang'), tgt = $('tgtLang'), input = $('input'), output = $('output');
   const counter = $('counter'), outCounter = $('outCounter'), status = $('status');
   const clearBtn = $('clearBtn'), copyBtn = $('copyBtn'), swapBtn = $('swapBtn');
-  const outPanel = $('outPanel'), engineEl = $('engine');
+  const outPanel = $('outPanel');
 
   let translation = '';
   let timer = null;
@@ -357,7 +357,6 @@
         throw e;
       }
       if (id !== reqId) return;
-      engineEl.textContent = usedMock ? 'Mock-заглушка' : 'MyMemory API';
       showOutput(result);
       setStatus('<span class="text-emerald-400">● Готово</span>');
     } catch (err) {
@@ -447,6 +446,7 @@
 </script>
 </body>
 </html>
+
 
 
 
