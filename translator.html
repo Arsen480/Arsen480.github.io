@@ -82,6 +82,12 @@
   .sw.on .knob { transform:translateX(16px); }
   .fix-pop { animation: fadeUp .35s ease both; }
 
+  .eng { padding:8px 18px; border-radius:.9rem; font-size:14px; font-weight:500; color:#94a3b8; transition:all .25s; cursor:pointer; }
+  .eng:hover { color:#fff; }
+  .eng.on { color:#fff; background:linear-gradient(135deg,#6366f1,#8b5cf6); box-shadow:0 0 22px -4px rgba(139,92,246,.9); }
+  .prog { height:6px; border-radius:99px; background:rgba(148,163,184,.18); overflow:hidden; }
+  .prog > i { display:block; height:100%; width:0; border-radius:inherit; background:linear-gradient(90deg,#22d3ee,#6366f1,#c084fc); transition:width .3s; }
+
   textarea { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
   .out-text.fade { animation: fadeUp .45s ease both; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
@@ -133,6 +139,17 @@
       <label for="tgtLang" class="sr-only">Целевой язык</label>
       <select id="tgtLang" class="lang w-full cursor-pointer rounded-2xl bg-slate-900/60 hover:bg-slate-900/90 border border-slate-700/60 focus:border-indigo-400 focus:outline-none px-4 py-3 pr-10 text-sm sm:text-base font-medium transition"></select>
     </div>
+  </div>
+
+  <div class="mb-4 sm:mb-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div class="glass rounded-2xl p-1 inline-flex" role="tablist" aria-label="Режим перевода">
+      <button id="engFast" type="button" class="eng on">⚡ Быстрый</button>
+      <button id="engSmart" type="button" class="eng">🧠 Умный ИИ</button>
+    </div>
+    <div id="aiInfo" class="flex-1 min-w-[220px] text-xs text-slate-400"></div>
+  </div>
+  <div id="aiProgWrap" hidden class="mb-4 sm:mb-6 -mt-2">
+    <div class="prog"><i id="aiProg"></i></div>
   </div>
 
   <!-- Panels -->
@@ -306,6 +323,7 @@
   }
 
   async function translateText(text, from, to, signal) {
+    if (engine === 'smart' && smartState === 'ready') return smartTranslate(text, from, to, signal);
     const parts = splitText(text, CONFIG.chunkSize);
     let out = '';
     for (const p of parts) {
@@ -407,11 +425,154 @@
     toastTimer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 2200);
   }
 
+  // ---------- Умный ИИ: NLLB-200 прямо в браузере (Web Worker) ----------
+  const NLLB = { ru: 'rus_Cyrl', en: 'eng_Latn', kk: 'kaz_Cyrl', de: 'deu_Latn', es: 'spa_Latn' };
+  const THREADS = Math.max(1, Math.min(navigator.hardwareConcurrency || 4, 16));
+  let engine = 'fast', smartState = 'idle', worker = null, wid = 0;
+  const waiting = new Map();
+  try { engine = localStorage.getItem('pg_engine') === 'smart' ? 'smart' : 'fast'; } catch {}
+
+  const WORKER_CODE = `
+    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6';
+    env.allowLocalModels = false;
+    let tr = null, latest = 0;
+    const files = {};
+    self.onmessage = async ({ data }) => {
+      if (data.type === 'load') {
+        try {
+          try { env.backends.onnx.wasm.numThreads = data.threads; } catch (e) {}
+          tr = await pipeline('translation', 'Xenova/nllb-200-distilled-600M', {
+            dtype: 'q8', device: 'wasm',
+            progress_callback: p => {
+              if (p.status === 'progress' && p.total) {
+                files[p.file] = { l: p.loaded, t: p.total };
+                let l = 0, t = 0;
+                for (const k in files) { l += files[k].l; t += files[k].t; }
+                self.postMessage({ type: 'progress', loaded: l, total: t });
+              }
+            }
+          });
+          self.postMessage({ type: 'ready', isolated: self.crossOriginIsolated === true });
+        } catch (e) { self.postMessage({ type: 'error', error: String((e && e.message) || e) }); }
+      } else if (data.type === 'translate') {
+        latest = data.id;
+        try {
+          const out = [];
+          for (const s of data.segs) {
+            if (latest !== data.id) { self.postMessage({ type: 'result', id: data.id, cancelled: true }); return; }
+            const r = await tr(s, { src_lang: data.src, tgt_lang: data.tgt, num_beams: 4, max_new_tokens: 400, no_repeat_ngram_size: 3 });
+            out.push(r[0].translation_text);
+          }
+          self.postMessage({ type: 'result', id: data.id, out });
+        } catch (e) { self.postMessage({ type: 'result', id: data.id, error: String((e && e.message) || e) }); }
+      }
+    };
+  `;
+
+  const aiInfo = $('aiInfo'), aiProg = $('aiProg'), aiProgWrap = $('aiProgWrap');
+  const mb = n => Math.round(n / 1048576);
+  function renderEngine() {
+    $('engFast').classList.toggle('on', engine === 'fast');
+    $('engSmart').classList.toggle('on', engine === 'smart');
+    if (engine === 'fast') {
+      aiProgWrap.hidden = true;
+      aiInfo.textContent = 'Онлайн-перевод: мгновенно, но без глубокого понимания контекста.';
+    } else if (smartState === 'ready') {
+      aiProgWrap.hidden = true;
+      aiInfo.innerHTML = '<span class="text-emerald-400">● Нейросеть NLLB-200 активна</span> — работает на вашем процессоре (потоков: ' + THREADS + '), понимает опечатки и транслит.';
+    } else if (smartState === 'error') {
+      aiProgWrap.hidden = true;
+      aiInfo.innerHTML = '<span class="text-rose-400">ИИ не запустился на этом устройстве — используется быстрый режим.</span>';
+    } else {
+      aiInfo.textContent = 'Загрузка нейросети NLLB-200 (≈850 МБ, один раз — дальше из кэша браузера). Пока работает быстрый режим.';
+    }
+  }
+  function startSmart() {
+    if (smartState === 'loading' || smartState === 'ready') return;
+    smartState = 'loading'; renderEngine(); aiProgWrap.hidden = false; aiProg.style.width = '2%';
+    try {
+      worker = new Worker(URL.createObjectURL(new Blob([WORKER_CODE], { type: 'text/javascript' })), { type: 'module' });
+    } catch (e) { smartState = 'error'; renderEngine(); return; }
+    worker.onerror = () => { smartState = 'error'; renderEngine(); };
+    worker.onmessage = ({ data: m }) => {
+      if (m.type === 'progress') {
+        const pct = Math.max(2, Math.round(m.loaded / m.total * 100));
+        aiProg.style.width = pct + '%';
+        aiInfo.textContent = 'Загрузка нейросети: ' + pct + '% (' + mb(m.loaded) + ' из ' + mb(m.total) + ' МБ). Пока работает быстрый режим.';
+      } else if (m.type === 'ready') {
+        smartState = 'ready'; renderEngine();
+        if (input.value.trim()) run();
+      } else if (m.type === 'error') {
+        console.error(m.error); smartState = 'error'; renderEngine();
+      } else if (m.type === 'result') {
+        const w = waiting.get(m.id); if (!w) return; waiting.delete(m.id);
+        if (m.error) w.reject(new Error(m.error));
+        else if (m.cancelled) w.reject(Object.assign(new Error('cancelled'), { name: 'AbortError' }));
+        else w.resolve(m.out);
+      }
+    };
+    worker.postMessage({ type: 'load', threads: THREADS });
+  }
+  async function smartTranslate(text, from, to, signal) {
+    const parts = splitText(text, 300);
+    const segs = parts.filter(p => !p.nl).map(p => p.text);
+    const id = ++wid;
+    const res = await new Promise((resolve, reject) => {
+      waiting.set(id, { resolve, reject });
+      worker.postMessage({ type: 'translate', id, segs, src: NLLB[from], tgt: NLLB[to] });
+    });
+    if (signal.cancelled) throw Object.assign(new Error('cancelled'), { name: 'AbortError' });
+    let k = 0, out = '';
+    for (const p of parts) {
+      if (p.nl) { out += '\n'; continue; }
+      out += (out && !out.endsWith('\n') ? ' ' : '') + res[k++];
+    }
+    return out;
+  }
+  function setEngine(e) {
+    engine = e;
+    try { localStorage.setItem('pg_engine', e); } catch {}
+    if (e === 'smart') startSmart();
+    renderEngine();
+    if (input.value.trim()) run();
+  }
+  $('engFast').addEventListener('click', () => setEngine('fast'));
+  $('engSmart').addEventListener('click', () => setEngine('smart'));
+
+  // ---------- Транслит: «zdrastvuyte» → «здраствуйте» ----------
+  const TR2 = [['shch','щ'],['sch','щ'],['yo','ё'],['yu','ю'],['ya','я'],['zh','ж'],['kh','х'],['ts','ц'],['ch','ч'],['sh','ш'],['ye','е'],['ey','ей'],['iy','ий'],['yi','ый']];
+  const TR1 = { a:'а',b:'б',v:'в',w:'в',g:'г',d:'д',e:'е',z:'з',i:'и',j:'й',k:'к',l:'л',m:'м',n:'н',o:'о',p:'п',r:'р',s:'с',t:'т',u:'у',f:'ф',h:'х',c:'к',q:'к',x:'кс',y:'ы' };
+  const EN_WORDS = /\b(the|and|is|are|you|with|this|that|have|what|hello|how|your|for|not|but|was|were|can|will)\b/i;
+  function translitNeeded(text) {
+    if (src.value !== 'ru' && src.value !== 'kk') return false;
+    const lat = (text.match(/[a-z]/gi) || []).length, cyr = (text.match(/[а-яёәіңғүұқөһ]/gi) || []).length;
+    return lat >= 3 && lat / (lat + cyr) >= 0.9 && !EN_WORDS.test(text);
+  }
+  function translit(text) {
+    return text.replace(/[a-z']+/gi, word => {
+      const w = word.toLowerCase(); let out = '', i = 0;
+      while (i < w.length) {
+        const two = TR2.find(([k]) => w.startsWith(k, i) && (k.length === 2 || w.startsWith(k, i)));
+        const three = TR2.find(([k]) => k.length === 4 && w.startsWith(k, i)) || TR2.find(([k]) => k.length === 3 && w.startsWith(k, i));
+        const hit = three || TR2.find(([k]) => k.length === 2 && w.startsWith(k, i));
+        if (hit) { out += hit[1]; i += hit[0].length; continue; }
+        const ch = w[i];
+        if (ch === 'y' && i > 0 && 'aeiou'.includes(w[i - 1])) out += 'й';
+        else if (ch === 'c' && 'eiy'.includes(w[i + 1] || '')) out += 'ц';
+        else if (ch === "'") out += 'ь';
+        else out += TR1[ch] || ch;
+        i++;
+      }
+      return word[0] === word[0].toUpperCase() && word[0] !== word[0].toLowerCase() ? out[0].toUpperCase() + out.slice(1) : out;
+    });
+  }
+  function prepareText(t) { return translitNeeded(t) ? translit(t) : t; }
+
   // ---------- Core ----------
   let controller = null;
 
   async function run() {
-    const text = input.value.trim();
+    const text = prepareText(input.value.trim());
     const id = ++reqId;
     if (controller) controller.cancelled = true;
     if (!text) {
@@ -422,7 +583,7 @@
     }
     controller = { cancelled: false };
     outPanel.classList.add('busy');
-    setStatus('<span class="spinner"></span><span>Перевожу…</span>');
+    setStatus('<span class="spinner"></span><span>' + (engine === 'smart' && smartState === 'ready' ? 'ИИ думает…' : 'Перевожу…') + '</span>');
     try {
       let result, usedMock = CONFIG.useMock;
       try {
@@ -448,7 +609,7 @@
     updateInputUI();
     if (!input.value.trim()) { run(); return; }
     setStatus('<span class="text-slate-500">Ожидание ввода…</span>');
-    timer = setTimeout(run, CONFIG.debounceMs);
+    timer = setTimeout(run, (engine === 'smart' && smartState === 'ready') ? 900 : CONFIG.debounceMs);
   }
 
   // ---------- Events ----------
@@ -560,7 +721,8 @@
     schedule();
   }
   async function checkSpelling() {
-    const text = input.value, id = ++ltId;
+    let text = input.value; const id = ++ltId;
+    if (autoOn && translitNeeded(text)) { text = translit(text); input.value = text; try { input.setSelectionRange(text.length, text.length); } catch {} showFix('⌨ Латиница → кириллица', false); schedule(); }
     if (!text.trim()) { pendingFixes = []; showFix('', false); return; }
     const lang = LT_LANG[src.value];
     if (!lang) { pendingFixes = []; showFix('Автокоррекция для казахского пока недоступна', false); return; }
@@ -589,12 +751,15 @@
     if (autoOn && pendingFixes.length) applyFixes(); else scheduleCheck();
   });
   renderToggle();
+  renderEngine();
+  if (engine === 'smart') startSmart();
 
   input.focus();
 })();
 </script>
 </body>
 </html>
+
 
 
 
