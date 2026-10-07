@@ -1,0 +1,452 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PolyGlot — AI Переводчик</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html { color-scheme: dark; }
+  body {
+    background: #0f172a;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+  /* Animated aurora background */
+  .aurora { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: #0f172a; }
+  .blob { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .45; animation: float 18s ease-in-out infinite; }
+  .blob.b1 { width: 480px; height: 480px; background: #4f46e5; top: -120px; left: -100px; }
+  .blob.b2 { width: 420px; height: 420px; background: #7c3aed; bottom: -140px; right: -80px; animation-delay: -6s; }
+  .blob.b3 { width: 320px; height: 320px; background: #2563eb; top: 40%; left: 55%; opacity: .3; animation-delay: -11s; }
+  @keyframes float {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(60px,40px) scale(1.1); }
+    66% { transform: translate(-40px,60px) scale(.95); }
+  }
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  }
+
+  .glass {
+    background: rgba(30, 41, 59, .55);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(148, 163, 184, .15);
+    transition: box-shadow .35s ease, border-color .35s ease, transform .35s ease;
+  }
+  .glass:focus-within {
+    border-color: rgba(129, 140, 248, .65);
+    box-shadow: 0 0 0 1px rgba(129,140,248,.35), 0 0 40px -6px rgba(99,102,241,.55), 0 0 90px -20px rgba(139,92,246,.45);
+  }
+  .glass.busy { border-color: rgba(167,139,250,.6); box-shadow: 0 0 40px -8px rgba(139,92,246,.6); }
+
+  .logo-text {
+    background: linear-gradient(90deg, #818cf8, #c084fc, #60a5fa, #818cf8);
+    background-size: 250% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: shine 6s linear infinite;
+  }
+  @keyframes shine { to { background-position: 250% 0; } }
+
+  .caret::after { content: "▍"; margin-left: 2px; color: #818cf8; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  select.lang {
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23a5b4fc' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  select.lang option { background: #1e293b; color: #e2e8f0; }
+
+  textarea { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
+  .out-text.fade { animation: fadeUp .45s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+
+  .swap-btn svg { transition: transform .5s cubic-bezier(.4,0,.2,1); }
+  .swap-btn.spin svg { transform: rotate(180deg); }
+
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(165,180,252,.25); border-top-color: #a5b4fc; border-radius: 9999px; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast { transition: opacity .3s, transform .3s; }
+</style>
+</head>
+<body class="min-h-screen text-slate-200 antialiased">
+
+<div class="aurora" aria-hidden="true">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="grid-bg"></div>
+</div>
+
+<div class="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10">
+
+  <!-- Header -->
+  <header class="text-center mb-8 sm:mb-12">
+    <div class="inline-flex items-center gap-3 mb-4">
+      <div class="h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 grid place-items-center shadow-[0_0_30px_-4px_rgba(99,102,241,.8)]">
+        <svg class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+      </div>
+      <h1 class="logo-text text-3xl sm:text-4xl font-extrabold tracking-tight">PolyGlot</h1>
+    </div>
+    <p class="text-slate-400 text-sm sm:text-lg h-7">
+      <span id="slogan" class="caret"></span>
+    </p>
+  </header>
+
+  <!-- Language bar -->
+  <div class="glass rounded-3xl p-3 sm:p-4 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-4">
+    <div class="flex-1 min-w-0">
+      <label for="srcLang" class="sr-only">Исходный язык</label>
+      <select id="srcLang" class="lang w-full cursor-pointer rounded-2xl bg-slate-900/60 hover:bg-slate-900/90 border border-slate-700/60 focus:border-indigo-400 focus:outline-none px-4 py-3 pr-10 text-sm sm:text-base font-medium transition"></select>
+    </div>
+
+    <button id="swapBtn" type="button" title="Поменять языки местами" aria-label="Поменять языки местами"
+      class="swap-btn shrink-0 h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white grid place-items-center shadow-[0_0_24px_-4px_rgba(99,102,241,.8)] hover:shadow-[0_0_34px_0_rgba(139,92,246,.9)] hover:scale-110 active:scale-95 transition">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M3 7h18"/><path d="M7 21l-4-4 4-4"/><path d="M21 17H3"/></svg>
+    </button>
+
+    <div class="flex-1 min-w-0">
+      <label for="tgtLang" class="sr-only">Целевой язык</label>
+      <select id="tgtLang" class="lang w-full cursor-pointer rounded-2xl bg-slate-900/60 hover:bg-slate-900/90 border border-slate-700/60 focus:border-indigo-400 focus:outline-none px-4 py-3 pr-10 text-sm sm:text-base font-medium transition"></select>
+    </div>
+  </div>
+
+  <!-- Panels -->
+  <main class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+
+    <!-- Input -->
+    <section class="glass rounded-3xl p-4 sm:p-5 flex flex-col">
+      <div class="flex items-center justify-between mb-2">
+        <span id="srcLabel" class="text-xs uppercase tracking-widest text-indigo-300/80 font-semibold"></span>
+        <button id="clearBtn" type="button" title="Очистить" aria-label="Очистить"
+          class="h-8 w-8 rounded-xl grid place-items-center text-slate-400 hover:text-white hover:bg-white/10 hover:rotate-90 active:scale-90 transition opacity-0 pointer-events-none">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <textarea id="input" rows="8" maxlength="5000" placeholder="Введите текст для перевода…" spellcheck="false"
+        class="flex-1 min-h-[200px] md:min-h-[280px] w-full resize-none bg-transparent text-lg sm:text-xl leading-relaxed text-slate-100 placeholder-slate-500 focus:outline-none"></textarea>
+      <div class="flex items-center justify-between pt-3 border-t border-slate-700/40 text-xs text-slate-500">
+        <span id="status" class="flex items-center gap-2"></span>
+        <span><span id="counter">0</span> / 5000</span>
+      </div>
+    </section>
+
+    <!-- Output -->
+    <section id="outPanel" class="glass rounded-3xl p-4 sm:p-5 flex flex-col bg-indigo-950/20">
+      <div class="flex items-center justify-between mb-2">
+        <span id="tgtLabel" class="text-xs uppercase tracking-widest text-violet-300/80 font-semibold"></span>
+        <button id="copyBtn" type="button" title="Скопировать в буфер обмена" aria-label="Скопировать в буфер обмена"
+          class="h-8 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white bg-white/5 hover:bg-indigo-500/30 active:scale-95 transition opacity-0 pointer-events-none">
+          <svg id="copyIcon" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span id="copyText">Копировать</span>
+        </button>
+      </div>
+      <div id="output" aria-live="polite"
+        class="out-text flex-1 min-h-[200px] md:min-h-[280px] whitespace-pre-wrap break-words text-lg sm:text-xl leading-relaxed text-slate-100 overflow-auto">
+        <span class="text-slate-500">Перевод появится здесь…</span>
+      </div>
+      <div class="pt-3 border-t border-slate-700/40 text-xs text-slate-500 flex justify-between">
+        <span id="engine">MyMemory API</span>
+        <span><span id="outCounter">0</span> симв.</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-center text-xs text-slate-500 mt-8">
+    PolyGlot · 5 языков · 20 направлений перевода
+  </footer>
+</div>
+
+<div id="toast" class="toast fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-4 opacity-0 pointer-events-none glass rounded-2xl px-5 py-3 text-sm text-slate-100"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Config ----------
+  const LANGUAGES = [
+    { code: 'ru', name: 'Русский',   flag: '🇷🇺' },
+    { code: 'en', name: 'English',   flag: '🇬🇧' },
+    { code: 'kk', name: 'Қазақша',   flag: '🇰🇿' },
+    { code: 'de', name: 'Deutsch',   flag: '🇩🇪' },
+    { code: 'es', name: 'Español',   flag: '🇪🇸' },
+  ];
+  const langName = c => LANGUAGES.find(l => l.code === c).name;
+
+  const SLOGANS = [
+    'Мгновенный перевод между 5 языками',
+    'Понимайте мир без границ',
+    'Русский · English · Қазақша · Deutsch · Español',
+    'Слова меняются — смысл остаётся',
+  ];
+
+  const CONFIG = {
+    debounceMs: 600,
+    chunkSize: 450,            // MyMemory принимает до 500 байт на запрос
+    useMock: false,            // true → принудительно использовать заглушку
+    contactEmail: '',          // необязательно: увеличивает дневной лимит MyMemory
+  };
+
+  // ---------- DOM ----------
+  const $ = id => document.getElementById(id);
+  const src = $('srcLang'), tgt = $('tgtLang'), input = $('input'), output = $('output');
+  const counter = $('counter'), outCounter = $('outCounter'), status = $('status');
+  const clearBtn = $('clearBtn'), copyBtn = $('copyBtn'), swapBtn = $('swapBtn');
+  const outPanel = $('outPanel'), engineEl = $('engine');
+
+  let translation = '';
+  let timer = null;
+  let reqId = 0;
+
+  // ---------- Translation providers ----------
+  // Чтобы подключить другой API (Google, Yandex, DeepL), замените тело translateChunk().
+  // Запрос через XHR (надёжнее fetch во встроенных окнах просмотра)
+  function getJSON(url) {
+    return new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open('GET', url);
+      x.timeout = 15000;
+      x.onload = () => {
+        if (x.status < 200 || x.status >= 300) return reject(new Error('HTTP ' + x.status));
+        try { resolve(JSON.parse(x.responseText)); } catch { reject(new Error('Некорректный ответ')); }
+      };
+      x.onerror = () => reject(new Error('Сеть недоступна'));
+      x.ontimeout = () => reject(new Error('Таймаут'));
+      x.send();
+    });
+  }
+
+  const PROVIDERS = [
+    async (text, from, to) => {
+      const params = new URLSearchParams({ q: text, langpair: `${from}|${to}` });
+      if (CONFIG.contactEmail) params.set('de', CONFIG.contactEmail);
+      const data = await getJSON(`https://api.mymemory.translated.net/get?${params}`);
+      if (Number(data.responseStatus) !== 200) throw new Error(data.responseDetails || 'MyMemory error');
+      const t = decodeEntities(data.responseData.translatedText);
+      if (/MYMEMORY WARNING|INVALID/i.test(t)) throw new Error(t);
+      return t;
+    },
+    async (text, from, to) => {
+      const params = new URLSearchParams({ client: 'gtx', sl: from, tl: to, dt: 't', q: text });
+      const data = await getJSON(`https://translate.googleapis.com/translate_a/single?${params}`);
+      return data[0].map(s => s[0]).join('');
+    },
+  ];
+
+  // Чтобы подключить другой API (Google Cloud, Yandex, DeepL), добавьте функцию в PROVIDERS.
+  async function translateChunk(text, from, to) {
+    if (CONFIG.useMock) return mockTranslate(text, from, to);
+    let lastErr;
+    for (const provider of PROVIDERS) {
+      try { return await provider(text, from, to); }
+      catch (e) { lastErr = e; console.warn('Провайдер не сработал:', e.message); }
+    }
+    throw new Error('Не удалось получить перевод: ' + (lastErr && lastErr.message));
+  }
+  // Заглушка: имитирует сетевую задержку и возвращает помеченный текст
+  async function mockTranslate(text, from, to) {
+    await new Promise(r => setTimeout(r, 400 + Math.random() * 400));
+    return `[${from}→${to}] ${text}`;
+  }
+
+  function decodeEntities(s) {
+    const t = document.createElement('textarea');
+    t.innerHTML = s;
+    return t.value;
+  }
+
+  // Разбивка текста на куски: по строкам, затем по предложениям
+  function splitText(text, max) {
+    const parts = [];
+    text.split('\n').forEach(line => {
+      if (!line.trim()) { parts.push({ nl: true }); return; }
+      const sentences = line.match(/[^.!?…]+[.!?…]*\s*/g) || [line];
+      let buf = '';
+      for (const s of sentences) {
+        if ((buf + s).length > max && buf) { parts.push({ text: buf.trim() }); buf = ''; }
+        if (s.length > max) {
+          for (let i = 0; i < s.length; i += max) parts.push({ text: s.slice(i, i + max).trim() });
+        } else buf += s;
+      }
+      if (buf.trim()) parts.push({ text: buf.trim() });
+      parts.push({ nl: true });
+    });
+    parts.pop();
+    return parts;
+  }
+
+  async function translateText(text, from, to, signal) {
+    const parts = splitText(text, CONFIG.chunkSize);
+    let out = '';
+    for (const p of parts) {
+      if (p.nl) { out += '\n'; continue; }
+      if (signal.cancelled) throw Object.assign(new Error('cancelled'), { name: 'AbortError' });
+      const t = await translateChunk(p.text, from, to, signal);
+      out += (out && !out.endsWith('\n') ? ' ' : '') + t;
+    }
+    return out;
+  }
+
+  // ---------- UI helpers ----------
+  function fillSelect(sel, value) {
+    sel.innerHTML = LANGUAGES.map(l => `<option value="${l.code}">${l.flag}  ${l.name}</option>`).join('');
+    sel.value = value;
+  }
+
+  function setStatus(html) { status.innerHTML = html; }
+
+  function showOutput(text, animate = true) {
+    translation = text;
+    outCounter.textContent = text.length;
+    if (text) {
+      output.textContent = text;
+      copyBtn.classList.remove('opacity-0', 'pointer-events-none');
+    } else {
+      output.innerHTML = '<span class="text-slate-500">Перевод появится здесь…</span>';
+      copyBtn.classList.add('opacity-0', 'pointer-events-none');
+    }
+    if (animate && text) {
+      output.classList.remove('fade'); void output.offsetWidth; output.classList.add('fade');
+    }
+  }
+
+  function updateLabels() {
+    $('srcLabel').textContent = langName(src.value);
+    $('tgtLabel').textContent = langName(tgt.value);
+  }
+
+  function updateInputUI() {
+    const n = input.value.length;
+    counter.textContent = n;
+    clearBtn.classList.toggle('opacity-0', n === 0);
+    clearBtn.classList.toggle('pointer-events-none', n === 0);
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.remove('opacity-0', 'translate-y-4');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 2200);
+  }
+
+  // ---------- Core ----------
+  let controller = null;
+
+  async function run() {
+    const text = input.value.trim();
+    const id = ++reqId;
+    if (controller) controller.cancelled = true;
+    if (!text) {
+      outPanel.classList.remove('busy');
+      setStatus('');
+      showOutput('', false);
+      return;
+    }
+    controller = { cancelled: false };
+    outPanel.classList.add('busy');
+    setStatus('<span class="spinner"></span><span>Перевожу…</span>');
+    try {
+      let result, usedMock = CONFIG.useMock;
+      try {
+        result = await translateText(text, src.value, tgt.value, controller);
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+        throw e;
+      }
+      if (id !== reqId) return;
+      engineEl.textContent = usedMock ? 'Mock-заглушка' : 'MyMemory API';
+      showOutput(result);
+      setStatus('<span class="text-emerald-400">● Готово</span>');
+    } catch (err) {
+      if (id !== reqId) return;
+      console.error(err);
+      setStatus(`<span class="text-rose-400">⚠ ${err.message || 'Ошибка перевода'}</span>`);
+    } finally {
+      if (id === reqId) outPanel.classList.remove('busy');
+    }
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    updateInputUI();
+    if (!input.value.trim()) { run(); return; }
+    setStatus('<span class="text-slate-500">Ожидание ввода…</span>');
+    timer = setTimeout(run, CONFIG.debounceMs);
+  }
+
+  // ---------- Events ----------
+  fillSelect(src, 'ru');
+  fillSelect(tgt, 'en');
+  updateLabels();
+
+  let prevSrc = src.value, prevTgt = tgt.value;
+
+  src.addEventListener('change', () => {
+    if (src.value === tgt.value) tgt.value = prevSrc;   // языки не должны совпадать
+    prevSrc = src.value; prevTgt = tgt.value;
+    updateLabels(); schedule();
+  });
+  tgt.addEventListener('change', () => {
+    if (src.value === tgt.value) src.value = prevTgt;
+    prevSrc = src.value; prevTgt = tgt.value;
+    updateLabels(); schedule();
+  });
+
+  swapBtn.addEventListener('click', () => {
+    swapBtn.classList.toggle('spin');
+    [src.value, tgt.value] = [tgt.value, src.value];
+    prevSrc = src.value; prevTgt = tgt.value;
+    // меняем местами и тексты
+    if (translation) { input.value = translation; }
+    updateLabels(); updateInputUI();
+    clearTimeout(timer);
+    run();
+  });
+
+  input.addEventListener('input', schedule);
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    clearTimeout(timer);
+    updateInputUI(); run(); input.focus();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    if (!translation) return;
+    try {
+      await navigator.clipboard.writeText(translation);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = translation; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+    }
+    $('copyText').textContent = 'Скопировано!';
+    toast('Перевод скопирован в буфер обмена');
+    setTimeout(() => $('copyText').textContent = 'Копировать', 1800);
+  });
+
+  // ---------- Animated slogan (typewriter) ----------
+  (async function typeSlogan() {
+    const el = $('slogan');
+    let i = 0;
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    while (true) {
+      const s = SLOGANS[i++ % SLOGANS.length];
+      for (let k = 1; k <= s.length; k++) { el.textContent = s.slice(0, k); await sleep(45); }
+      await sleep(2200);
+      for (let k = s.length; k >= 0; k--) { el.textContent = s.slice(0, k); await sleep(20); }
+      await sleep(350);
+    }
+  })();
+
+  input.focus();
+})();
+</script>
+</body>
+</html>
+
+
+
