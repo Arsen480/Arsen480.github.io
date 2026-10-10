@@ -1,395 +1,265 @@
-﻿<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Arsen — Портфолио</title>
-<meta name="description" content="Портфолио Арсена: сайты, игры и эксперименты.">
+<title>Создание сайтов на заказ в Астане и Усть-Каменогорске — Arsen Web</title>
+<meta name="description" content="Разрабатываю сайты для бизнеса на заказ в Астане, Усть-Каменогорске и по всему Казахстану: лендинги, сайты компаний и интернет-магазины. Напишите в WhatsApp, и я назову стоимость и сроки.">
+<link rel="canonical" href="https://arsen480.github.io/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0d1b24">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:site_name" content="Arsen Web">
+<meta property="og:title" content="Создание сайтов на заказ в Астане и Усть-Каменогорске — Arsen Web">
+<meta property="og:description" content="Лендинги, сайты компаний и интернет-магазины. Заявка в WhatsApp, ответ в тот же день.">
+<meta property="og:url" content="https://arsen480.github.io/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #07080f;
-    --text: #e8eaf6;
-    --muted: #8b90b0;
-    --a1: #7c5cff;
-    --a2: #22d3ee;
-    --a3: #f472b6;
-    --glass: rgba(255,255,255,.055);
-    --glass-b: rgba(255,255,255,.12);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: Inter, system-ui, sans-serif; font-weight: 300;
-    overflow-x: hidden; min-height: 100vh;
-    cursor: default;
-  }
-  h1,h2,h3,.logo { font-family: "Space Grotesk", sans-serif; }
-
-  /* ---------- Matte aurora background ---------- */
-  .bg { position: fixed; inset: 0; z-index: -2; overflow: hidden; }
-  .orb { position: absolute; border-radius: 50%; filter: blur(110px); opacity: .55; will-change: transform; }
-  .o1 { width: 620px; height: 620px; background: var(--a1); top: -180px; left: -140px; animation: drift1 22s ease-in-out infinite; }
-  .o2 { width: 520px; height: 520px; background: var(--a2); bottom: -200px; right: -120px; opacity: .38; animation: drift2 26s ease-in-out infinite; }
-  .o3 { width: 420px; height: 420px; background: var(--a3); top: 35%; left: 50%; opacity: .28; animation: drift3 30s ease-in-out infinite; }
-  @keyframes drift1 { 50% { transform: translate(180px, 140px) scale(1.2); } }
-  @keyframes drift2 { 50% { transform: translate(-220px, -100px) scale(1.15); } }
-  @keyframes drift3 { 33% { transform: translate(-260px, 60px); } 66% { transform: translate(120px,-120px) scale(1.2); } }
-  /* matte grain overlay */
-  .grain {
-    position: fixed; inset: -50%; z-index: -1; pointer-events: none; opacity: .09;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    animation: grain 1.2s steps(6) infinite;
-  }
-  @keyframes grain { 0%{transform:translate(0,0)} 20%{transform:translate(-3%,2%)} 40%{transform:translate(2%,-3%)} 60%{transform:translate(-2%,-1%)} 80%{transform:translate(3%,3%)} }
-  #stars { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
-
-  /* cursor glow */
-  .glow { position: fixed; width: 420px; height: 420px; border-radius: 50%; pointer-events: none; z-index: -1;
-    background: radial-gradient(circle, rgba(124,92,255,.22), transparent 65%); transform: translate(-50%,-50%); transition: opacity .3s; }
-
-  /* ---------- Layout ---------- */
-  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
-
-  nav {
-    position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 50;
-    display: flex; align-items: center; gap: 28px;
-    padding: 12px 26px; border-radius: 999px;
-    background: rgba(15,17,30,.55); border: 1px solid var(--glass-b);
-    backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%);
-    animation: down .9s cubic-bezier(.2,.8,.2,1) both;
-  }
-  nav .logo { font-weight: 700; letter-spacing: -.02em; }
-  nav a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .25s; }
-  nav a:hover { color: #fff; }
-  @keyframes down { from { opacity: 0; transform: translate(-50%,-30px); } }
-
-  section { padding: 110px 0; }
-  .hero { min-height: 100vh; display: flex; align-items: center; padding-top: 120px; }
-
-  .badge {
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 8px 16px; border-radius: 999px; font-size: 13px; color: var(--muted);
-    background: var(--glass); border: 1px solid var(--glass-b);
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 0 rgba(52,211,153,.7); animation: pulse 2s infinite; }
-  @keyframes pulse { to { box-shadow: 0 0 0 12px rgba(52,211,153,0); } }
-
-  h1 { font-size: clamp(44px, 9vw, 112px); line-height: .98; letter-spacing: -.04em; font-weight: 700; margin: 26px 0 22px; }
-  .grad {
-    background: linear-gradient(100deg, var(--a2), var(--a1), var(--a3), var(--a2));
-    background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
-    animation: flow 7s linear infinite;
-  }
-  @keyframes flow { to { background-position: 300% 0; } }
-  .lead { font-size: clamp(17px, 2.2vw, 22px); color: var(--muted); max-width: 600px; line-height: 1.6; }
-  .type::after { content: "▍"; color: var(--a2); animation: blink 1s steps(1) infinite; margin-left: 3px; }
-  @keyframes blink { 50% { opacity: 0; } }
-
-  .cta { display: flex; gap: 14px; margin-top: 38px; flex-wrap: wrap; }
-  .btn {
-    position: relative; display: inline-flex; align-items: center; gap: 10px;
-    padding: 15px 28px; border-radius: 16px; text-decoration: none; font-weight: 500; font-size: 15px; color: #fff;
-    transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s;
-  }
-  .btn.primary { background: linear-gradient(135deg, var(--a1), #5b3df5); box-shadow: 0 10px 40px -10px rgba(124,92,255,.8); }
-  .btn.primary:hover { transform: translateY(-3px); box-shadow: 0 16px 50px -8px rgba(124,92,255,1); }
-  .btn.ghost { background: var(--glass); border: 1px solid var(--glass-b); backdrop-filter: blur(14px); }
-  .btn.ghost:hover { transform: translateY(-3px); background: rgba(255,255,255,.1); }
-
-  .stats { display: flex; gap: 48px; margin-top: 70px; flex-wrap: wrap; }
-  .stat b { display: block; font-family: "Space Grotesk"; font-size: 38px; font-weight: 700; }
-  .stat span { color: var(--muted); font-size: 14px; }
-
-  .scroll { position: absolute; bottom: 30px; left: 50%; width: 24px; height: 40px; border: 1.5px solid var(--glass-b); border-radius: 14px; transform: translateX(-50%); }
-  .scroll::after { content: ""; position: absolute; top: 8px; left: 50%; width: 3px; height: 8px; margin-left: -1.5px; border-radius: 2px; background: #fff; animation: wheel 1.8s infinite; }
-  @keyframes wheel { 0% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px); } }
-
-  /* ---------- Projects ---------- */
-  .eyebrow { color: var(--a2); font-size: 13px; letter-spacing: .2em; text-transform: uppercase; font-weight: 500; }
-  h2 { font-size: clamp(32px, 5vw, 56px); letter-spacing: -.03em; margin: 12px 0 14px; }
-  .sub { color: var(--muted); max-width: 520px; line-height: 1.6; }
-
-  .filters { display: flex; gap: 10px; margin: 36px 0 34px; flex-wrap: wrap; }
-  .chip { padding: 9px 18px; border-radius: 999px; font-size: 14px; color: var(--muted); cursor: pointer; font-family: inherit;
-    background: var(--glass); border: 1px solid var(--glass-b); backdrop-filter: blur(12px); transition: all .25s; }
-  .chip:hover { color: #fff; }
-  .chip.on { color: #fff; background: linear-gradient(135deg, rgba(124,92,255,.5), rgba(34,211,238,.25)); border-color: rgba(124,92,255,.7); }
-
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
-  .card {
-    position: relative; display: flex; flex-direction: column; padding: 28px; border-radius: 28px; overflow: hidden;
-    background: var(--glass); border: 1px solid var(--glass-b); text-decoration: none; color: inherit;
-    backdrop-filter: blur(26px) saturate(150%); -webkit-backdrop-filter: blur(26px) saturate(150%);
-    transform-style: preserve-3d; transition: transform .25s ease-out, border-color .3s, opacity .5s, box-shadow .3s;
-    opacity: 0; transform: translateY(40px);
-  }
-  .card.in { opacity: 1; transform: translateY(0); }
-  .card::before { /* spotlight */
-    content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .3s; pointer-events: none;
-    background: radial-gradient(380px circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,.12), transparent 45%);
-  }
-  .card:hover::before { opacity: 1; }
-  .card:hover { border-color: rgba(255,255,255,.28); box-shadow: 0 30px 70px -30px var(--c, #7c5cff); }
-  .card.hide { display: none; }
-
-  .ico { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; font-size: 28px; margin-bottom: 22px;
-    background: linear-gradient(135deg, var(--c1), var(--c2)); box-shadow: 0 12px 30px -10px var(--c1); transition: transform .4s; }
-  .card:hover .ico { transform: rotate(-8deg) scale(1.1); }
-  .card h3 { font-size: 22px; letter-spacing: -.02em; margin-bottom: 10px; }
-  .card p { color: var(--muted); line-height: 1.6; font-size: 15px; flex: 1; }
-  .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
-  .tags span { font-size: 12px; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,.07); color: #c5c9e6; }
-  .go { margin-top: 22px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: #fff; }
-  .go i { font-style: normal; transition: transform .3s; }
-  .card:hover .go i { transform: translateX(6px); }
-  .soon { position: absolute; top: 22px; right: 22px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-
-  .frame { margin-top: 36px; border-radius: 28px; overflow: hidden; background: var(--glass); border: 1px solid var(--glass-b);
-    backdrop-filter: blur(26px); box-shadow: 0 40px 90px -40px rgba(124,92,255,.6); }
-  .frame .bar { display: flex; align-items: center; gap: 8px; padding: 14px 20px; border-bottom: 1px solid var(--glass-b); font-size: 13px; color: var(--muted); }
-  .frame .bar i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; }
-  .frame .bar i:nth-child(2) { background: #febc2e; } .frame .bar i:nth-child(3) { background: #28c840; }
-  .frame .bar span { margin-left: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .frame .bar a { color: var(--a2); text-decoration: none; white-space: nowrap; }
-  .frame iframe { display: block; width: 100%; height: 820px; border: 0; background: #0f172a; }
-  @media (max-width: 640px) { .frame iframe { height: 1100px; } .frame .bar span { display: none; } }
-
-  /* ---------- Skills / Contact ---------- */
-  .skills { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
-  .skill { padding: 14px 24px; border-radius: 18px; background: var(--glass); border: 1px solid var(--glass-b);
-    backdrop-filter: blur(16px); font-family: "Space Grotesk"; font-size: 17px; transition: transform .3s, border-color .3s; }
-  .skill:hover { transform: translateY(-5px) rotate(-1.5deg); border-color: var(--a1); }
-
-  .contact { text-align: center; }
-  .contact .box { padding: 70px 24px; border-radius: 36px; background: var(--glass); border: 1px solid var(--glass-b);
-    backdrop-filter: blur(30px); position: relative; overflow: hidden; }
-  .contact .box::before { content:""; position:absolute; inset:-1px; border-radius:inherit; padding:1px;
-    background: conic-gradient(from var(--ang,0deg), transparent 0 70%, var(--a2), var(--a1), var(--a3), transparent);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
-    animation: spin 6s linear infinite; }
-  @property --ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-  @keyframes spin { to { --ang: 360deg; } }
-  .contact h2 { margin-top: 0; }
-  .contact .cta { justify-content: center; }
-
-  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 40px 0 50px; }
-
-  .reveal { opacity: 0; transform: translateY(34px); transition: opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1); }
-  .reveal.in { opacity: 1; transform: none; }
-
-  @media (max-width: 640px) {
-    nav { gap: 16px; padding: 10px 18px; }
-    nav a:nth-child(n+5) { display: none; }
-    .stats { gap: 28px; }
-    .grid { grid-template-columns: 1fr; }
-    .glow { display: none; }
-  }
-  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .reveal, .card { opacity: 1; transform: none; } }
-</style>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ProfessionalService",
+      "@id": "https://arsen480.github.io/#business",
+      "name": "Arsen Web",
+      "url": "https://arsen480.github.io/",
+      "description": "Разработка сайтов на заказ для бизнеса: лендинги, корпоративные сайты, интернет-магазины.",
+      "telephone": "+77755092035",
+      "areaServed": [ { "@type": "City", "name": "Астана" }, { "@type": "City", "name": "Усть-Каменогорск" }, { "@type": "Country", "name": "Казахстан" } ],
+      "knowsAbout": ["Создание сайтов", "Лендинги", "Интернет-магазины", "Корпоративные сайты"]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "Сколько стоит заказать сайт?", "acceptedAnswer": { "@type": "Answer", "text": "Лендинг стоит от 50 000 ₸, сайт компании от 120 000 ₸, интернет-магазин от 250 000 ₸. Точную цену называю после короткого обсуждения задачи в WhatsApp." } },
+        { "@type": "Question", "name": "За какой срок делается сайт?", "acceptedAnswer": { "@type": "Answer", "text": "Лендинг занимает обычно 5–10 рабочих дней, сайт компании 2–4 недели, интернет-магазин 4–8 недель. Срок зависит от готовности текстов и фотографий." } },
+        { "@type": "Question", "name": "Нужно ли мне самому готовить тексты и фото?", "acceptedAnswer": { "@type": "Answer", "text": "Не обязательно. Если материалов нет, помогу составить структуру и тексты, а фотографии подберём вместе или используем ваши." } },
+        { "@type": "Question", "name": "Будет ли сайт удобно открываться с телефона?", "acceptedAnswer": { "@type": "Answer", "text": "Да. Каждый сайт проверяю на телефоне, планшете и компьютере. Большинство посетителей приходит со смартфонов." } },
+        { "@type": "Question", "name": "Гарантируете ли вы первые места в Google?", "acceptedAnswer": { "@type": "Answer", "text": "Нет, никто не может это гарантировать. Я делаю сайт технически готовым к поиску: быстрая загрузка, понятная структура, правильные заголовки и описания." } }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
+<a class="skip" href="#main">Перейти к содержимому</a>
 
-<div class="bg"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
-<canvas id="stars"></canvas>
-<div class="grain"></div>
-<div class="glow" id="glow"></div>
+<header class="top">
+  <div class="wrap bar">
+    <a class="logo" href="/"><img src="favicon.svg" alt="" width="30" height="30">Arsen Web</a>
+    <nav class="main" aria-label="Основное меню">
+      <a href="#services">Услуги</a>
+      <a href="#portfolio">Работы</a>
+      <a href="#process">Процесс</a>
+      <a href="#pricing">Стоимость</a>
+      <a href="#faq">Вопросы</a>
+    </nav>
+    <a class="btn wa sm" href="https://wa.me/77755092035?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%B0%D1%82%D1%8C%20%D1%81%D0%B0%D0%B9%D1%82." rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.5 0 .2 5.3.2 11.84c0 2.09.55 4.13 1.6 5.93L0 24l6.4-1.68a11.8 11.8 0 0 0 5.64 1.44h.01c6.54 0 11.84-5.3 11.84-11.84 0-3.16-1.23-6.13-3.37-8.44zM12.05 21.8h-.01a9.8 9.8 0 0 1-5-1.37l-.36-.21-3.8 1 1.01-3.7-.23-.38a9.8 9.8 0 0 1-1.5-5.2c0-5.42 4.42-9.84 9.85-9.84 2.63 0 5.1 1.02 6.96 2.88a9.77 9.77 0 0 1 2.88 6.96c0 5.43-4.42 9.86-9.8 9.86zm5.4-7.37c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.2-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.22 3.08.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35z"/></svg><span class="t">Написать в </span>WhatsApp</a>
+  </div>
+</header>
 
-<nav>
-  <span class="logo">Arsen<span class="grad">.</span></span>
-  <a href="#about">Обо мне</a>
-  <a href="#projects">Проекты</a>
-  <a href="#demo">Переводчик</a>
-  <a href="#skills">Навыки</a>
-  <a href="#contact">Контакты</a>
-</nav>
-
-<main class="wrap">
-  <section class="hero" id="about">
-    <div>
-      <div class="badge reveal"><span class="dot"></span> Открыт к новым проектам</div>
-      <h1 class="reveal">Привет, я <span class="grad">Арсен</span>.<br>Создаю цифровые <span class="grad">миры</span>.</h1>
-      <p class="lead reveal"><span id="typed" class="type"></span></p>
-      <div class="cta reveal">
-        <a class="btn primary" href="#projects">Смотреть проекты <span>→</span></a>
-        <a class="btn ghost" href="https://github.com/Arsen480" target="_blank" rel="noopener">GitHub</a>
+<main id="main">
+  <section class="hero">
+    <div class="wrap grid">
+      <div>
+        <p class="eyebrow">Астана · Усть-Каменогорск · весь Казахстан</p>
+        <h1>Создание сайтов для бизнеса <em>на заказ</em></h1>
+        <p class="lead">Нужен сайт, который приводит клиентов, а не просто висит в интернете? Напишите мне в WhatsApp: за 10 минут разберём задачу, и я назову цену и срок.</p>
+        <div class="cta">
+          <a class="btn wa" href="#brief">Оставить заявку</a>
+          <a class="btn line" href="#portfolio">Посмотреть работу</a>
+        </div>
+        <div class="facts">
+          <div><b>1 день</b>на ответ с ценой</div>
+          <div><b>от 50 000 ₸</b>лендинг под ключ</div>
+          <div><b>3 версии</b>телефон, планшет, ПК</div>
+        </div>
       </div>
-      <div class="stats reveal">
-        <div class="stat"><b data-count="1" data-plus="">0</b><span>проект</span></div>
-        <div class="stat"><b data-count="5" data-plus="">0</b><span>языков в переводчике</span></div>
-        <div class="stat"><b data-count="100" data-plus="%">0</b><span>энтузиазма</span></div>
+      <figure>
+        <div class="chat" role="img" aria-label="Пример переписки с заказчиком в WhatsApp">
+          <div class="chat-head"><div class="ava">A</div><div><strong>Arsen Web</strong><small>в сети</small></div></div>
+          <div class="msgs">
+            <div class="msg me">Здравствуйте! Нужен сайт для кофейни, чтобы клиенты видели меню и писали в WhatsApp<time>10:42</time></div>
+            <div class="msg you">Добрый день! Подойдёт лендинг: меню, фото, карта и кнопка заказа. Срок около недели. Есть логотип и фото?<time>10:44</time></div>
+            <div class="msg me">Логотип есть, фото сделаем<time>10:45</time></div>
+            <div class="msg you">Отлично, пришлю цену и план работ сегодня<time>10:46</time></div>
+          </div>
+          <p class="chat-note">Пример переписки</p>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section id="services" style="background:#fff;border-block:1px solid var(--line)">
+    <div class="wrap">
+      <p class="eyebrow">Услуги</p>
+      <h2>Какой сайт вам нужен</h2>
+      <p class="lead">Три формата. Выбирайте по задаче, а если сомневаетесь, напишите, и я подскажу.</p>
+      <div class="cards">
+        <a class="card" href="landing-page.html">
+          <span class="tag">Для рекламы и акций</span>
+          <h3>Лендинг</h3>
+          <p>Одна страница, которая объясняет предложение и подводит к заявке. Хорошо работает с рекламой в Instagram и Google.</p>
+          <span class="price">от 50 000 ₸ · 5–10 дней</span>
+          <span class="more">Подробнее →</span>
+        </a>
+        <a class="card" href="corporate-site.html">
+          <span class="tag">Для компаний</span>
+          <h3>Сайт компании</h3>
+          <p>Несколько страниц: услуги, о компании, команда, контакты. Чтобы вас находили в Google и доверяли с первого визита.</p>
+          <span class="price">от 120 000 ₸ · 2–4 недели</span>
+          <span class="more">Подробнее →</span>
+        </a>
+        <a class="card" href="online-store.html">
+          <span class="tag">Для продаж</span>
+          <h3>Интернет-магазин</h3>
+          <p>Каталог, корзина и приём заказов. Заказы приходят вам в WhatsApp или на почту, оплату подключаем под вашу задачу.</p>
+          <span class="price">от 250 000 ₸ · 4–8 недель</span>
+          <span class="more">Подробнее →</span>
+        </a>
       </div>
     </div>
-    <div class="scroll"></div>
   </section>
 
-  <section id="projects">
-    <div class="reveal">
-      <div class="eyebrow">Портфолио</div>
-      <h2>Мои проекты</h2>
-      <p class="sub">Мой главный проект. Наведите курсор на карточку.</p>
-    </div>
-    <div class="filters reveal" id="filters" style="display:none"></div>
-    <div class="grid" id="grid"></div>
-  </section>
-
-  <section id="demo">
-    <div class="reveal">
-      <div class="eyebrow">Живое демо</div>
-      <h2>Переводчик PolyGlot</h2>
-      <p class="sub">Попробуйте прямо здесь: 5 языков, 20 направлений перевода.</p>
-    </div>
-    <div class="frame reveal">
-      <div class="bar"><i></i><i></i><i></i><span>arsen480.github.io/translator.html</span>
-        <a href="translator.html" target="_blank" rel="noopener">Открыть на весь экран ↗</a></div>
-      <iframe src="translator.html" title="PolyGlot — переводчик" loading="lazy"></iframe>
-    </div>
-  </section>
-
-  <section id="skills">
-    <div class="reveal">
-      <div class="eyebrow">Стек</div>
-      <h2>Чем я работаю</h2>
-    </div>
-    <div class="skills reveal">
-      <div class="skill">HTML / CSS</div><div class="skill">JavaScript</div><div class="skill">Tailwind CSS</div>
-      <div class="skill">Python</div><div class="skill">AI-инструменты</div><div class="skill">GitHub Pages</div>
-    </div>
-  </section>
-
-  <section class="contact" id="contact">
-    <div class="box reveal">
-      <div class="eyebrow">Контакты</div>
-      <h2>Давайте сделаем<br><span class="grad">что-то крутое</span></h2>
-      <p class="sub" style="margin:0 auto">Есть идея или предложение? Напишите мне.</p>
-      <div class="cta">
-        <a class="btn primary" href="mailto:arstulumbergenov@gmail.com">Написать на почту</a>
-        <a class="btn ghost" href="https://github.com/Arsen480" target="_blank" rel="noopener">github.com/Arsen480</a>
+  <section id="portfolio">
+    <div class="wrap">
+      <p class="eyebrow">Портфолио</p>
+      <h2>Примеры сайтов для малого бизнеса</h2>
+      <p class="lead">Четыре демо-проекта: так может выглядеть ваш сайт. Названия и цены в них вымышлены, а вёрстка, адаптация под телефон и структура настоящие.</p>
+      <div class="works">
+        <a class="work" href="demos/coffee/">
+          <div class="thumb"><iframe src="demos/coffee/" title="Предпросмотр: Zerno" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+          <div class="work-t"><span class="tag">Кофейня</span><h3>Zerno</h3><p>Меню и заказ к выдаче</p></div>
+        </a><a class="work" href="demos/barber/">
+          <div class="thumb"><iframe src="demos/barber/" title="Предпросмотр: Борода&Ножницы" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+          <div class="work-t"><span class="tag">Барбершоп</span><h3>Борода&Ножницы</h3><p>Услуги, цены, запись</p></div>
+        </a><a class="work" href="demos/autoservice/">
+          <div class="thumb"><iframe src="demos/autoservice/" title="Предпросмотр: Мотор Сервис" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+          <div class="work-t"><span class="tag">Автосервис</span><h3>Мотор Сервис</h3><p>Прайс и запись на диагностику</p></div>
+        </a><a class="work" href="demos/tires/">
+          <div class="thumb"><iframe src="demos/tires/" title="Предпросмотр: Шина Плюс" loading="lazy" tabindex="-1" aria-hidden="true"></iframe></div>
+          <div class="work-t"><span class="tag">Шиномонтаж</span><h3>Шина Плюс</h3><p>Прайс и запись онлайн</p></div>
+        </a>
       </div>
+      <article class="case">
+        <div class="shot" aria-hidden="true"><span>PolyGlot</span></div>
+        <div>
+          <p class="eyebrow">Собственный проект</p>
+          <h3>PolyGlot — онлайн-переводчик</h3>
+          <ul>
+            <li>5 языков: русский, английский, казахский, немецкий, испанский</li>
+            <li>20 направлений перевода и автоисправление опечаток</li>
+            <li>Работает на телефоне и компьютере</li>
+          </ul>
+          <a class="btn line" href="translator.html">Открыть проект</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="process" class="dark">
+    <div class="wrap">
+      <p class="eyebrow">Как мы работаем</p>
+      <h2>Четыре шага от сообщения до запуска</h2>
+      <ol class="steps">
+        <li><h3>Заявка</h3><p>Пишете в WhatsApp, что нужно. Я задаю несколько вопросов и называю цену и срок.</p></li>
+        <li><h3>Договорённость</h3><p>Фиксируем объём работ и сроки. Предоплата начинает проект.</p></li>
+        <li><h3>Разработка</h3><p>Показываю промежуточный результат, вы вносите правки до утверждения.</p></li>
+        <li><h3>Запуск</h3><p>Подключаем домен и размещение, проверяем сайт на телефоне. Помогаю с первыми шагами в Google.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap">
+      <p class="eyebrow">Стоимость</p>
+      <h2>Цены понятны заранее</h2>
+      <div class="plans">
+        <div class="plan"><h3>Лендинг</h3><div class="big">от 50 000 ₸</div>
+          <ul><li>Одна страница</li><li>Адаптация под телефон</li><li>Кнопка заявки в WhatsApp</li></ul>
+          <a class="btn wa" href="https://wa.me/77755092035?text=%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%B0%D1%82%D1%8C%20%D0%BB%D0%B5%D0%BD%D0%B4%D0%B8%D0%BD%D0%B3." rel="noopener">Заказать</a></div>
+        <div class="plan"><h3>Сайт компании</h3><div class="big">от 120 000 ₸</div>
+          <ul><li>До 6 страниц</li><li>Базовая SEO-подготовка</li><li>Форма связи и карта</li></ul>
+          <a class="btn wa" href="https://wa.me/77755092035?text=%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%B0%D1%82%D1%8C%20%D1%81%D0%B0%D0%B9%D1%82%20%D0%BA%D0%BE%D0%BC%D0%BF%D0%B0%D0%BD%D0%B8%D0%B8." rel="noopener">Заказать</a></div>
+        <div class="plan"><h3>Интернет-магазин</h3><div class="big">от 250 000 ₸</div>
+          <ul><li>Каталог и корзина</li><li>Приём заказов</li><li>Обучение работе с товарами</li></ul>
+          <a class="btn wa" href="https://wa.me/77755092035?text=%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%B0%D1%82%D1%8C%20%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82-%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD." rel="noopener">Заказать</a></div>
+      </div>
+      <p class="fine">Цены ориентировочные: итог зависит от объёма и материалов. Домен и размещение оплачиваются отдельно.</p>
+    </div>
+  </section>
+
+  <section id="faq" style="background:#fff;border-block:1px solid var(--line)">
+    <div class="wrap">
+      <p class="eyebrow">Вопросы</p>
+      <h2>Частые вопросы</h2>
+      <details><summary>Сколько стоит заказать сайт?</summary><p>Лендинг стоит от 50 000 ₸, сайт компании от 120 000 ₸, интернет-магазин от 250 000 ₸. Точную цену называю после короткого обсуждения задачи в WhatsApp.</p></details>
+      <details><summary>За какой срок делается сайт?</summary><p>Лендинг занимает обычно 5–10 рабочих дней, сайт компании 2–4 недели, интернет-магазин 4–8 недель. Срок зависит от готовности текстов и фотографий.</p></details>
+      <details><summary>Нужно ли мне самому готовить тексты и фото?</summary><p>Не обязательно. Если материалов нет, помогу составить структуру и тексты, а фотографии подберём вместе или используем ваши.</p></details>
+      <details><summary>Будет ли сайт удобно открываться с телефона?</summary><p>Да. Каждый сайт проверяю на телефоне, планшете и компьютере. Большинство посетителей приходит со смартфонов.</p></details>
+      <details><summary>Гарантируете ли вы первые места в Google?</summary><p>Нет, никто не может это гарантировать. Я делаю сайт технически готовым к поиску: быстрая загрузка, понятная структура, правильные заголовки и описания.</p></details>
+    </div>
+  </section>
+
+  <section id="brief" class="dark">
+    <div class="wrap brief">
+      <div>
+        <p class="eyebrow">Контакты</p>
+        <h2>Заказать сайт в Астане и Усть-Каменогорске</h2>
+        <p class="lead">Ответьте на два вопроса, и WhatsApp откроется с готовым сообщением. Останется нажать «Отправить». Или позвоните сами:</p>
+        <a class="phone" href="tel:+77755092035">+7 775 509 20 35</a>
+        <p>Работаю с клиентами из Астаны, Усть-Каменогорска и других городов Казахстана. Отвечаю ежедневно с 10:00 до 20:00.</p>
+      </div>
+      <form class="panel" id="briefForm" onsubmit="return false">
+        <fieldset>
+          <legend>Что нужно сделать?</legend>
+          <div class="opts">
+            <input type="radio" name="type" id="t1" value="лендинг" checked><label for="t1">Лендинг</label>
+            <input type="radio" name="type" id="t2" value="сайт компании"><label for="t2">Сайт компании</label>
+            <input type="radio" name="type" id="t3" value="интернет-магазин"><label for="t3">Интернет-магазин</label>
+            <input type="radio" name="type" id="t4" value="пока не знаю, нужна консультация"><label for="t4">Не знаю</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Когда нужен сайт?</legend>
+          <div class="opts">
+            <input type="radio" name="when" id="w1" value="как можно скорее" checked><label for="w1">Срочно</label>
+            <input type="radio" name="when" id="w2" value="в течение месяца"><label for="w2">В течение месяца</label>
+            <input type="radio" name="when" id="w3" value="пока присматриваюсь"><label for="w3">Присматриваюсь</label>
+          </div>
+        </fieldset>
+        <a class="btn wa" id="briefLink" href="https://wa.me/77755092035" rel="noopener">Отправить заявку в WhatsApp</a>
+      </form>
     </div>
   </section>
 </main>
 
-<footer>© <span id="year"></span> Arsen · Сделано с ♥ и немного магии</footer>
+<footer>
+  <div class="wrap">
+    <span>© <span id="y">2026</span> Arsen Web · Разработка сайтов на заказ в Астане, Усть-Каменогорске и по Казахстану</span>
+    <span><a href="landing-page.html">Лендинги</a> · <a href="corporate-site.html">Сайты компаний</a> · <a href="online-store.html">Интернет-магазины</a></span>
+  </div>
+</footer>
+
+<a class="fab" href="https://wa.me/77755092035" rel="noopener" aria-label="Написать в WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.5 0 .2 5.3.2 11.84c0 2.09.55 4.13 1.6 5.93L0 24l6.4-1.68a11.8 11.8 0 0 0 5.64 1.44h.01c6.54 0 11.84-5.3 11.84-11.84 0-3.16-1.23-6.13-3.37-8.44zM12.05 21.8h-.01a9.8 9.8 0 0 1-5-1.37l-.36-.21-3.8 1 1.01-3.7-.23-.38a9.8 9.8 0 0 1-1.5-5.2c0-5.42 4.42-9.84 9.85-9.84 2.63 0 5.1 1.02 6.96 2.88a9.77 9.77 0 0 1 2.88 6.96c0 5.43-4.42 9.86-9.8 9.86zm5.4-7.37c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.2-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.22 3.08.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35z"/></svg></a>
 
 <script>
-(() => {
-  'use strict';
-
-  /* ===================== РЕДАКТИРУЙТЕ ЗДЕСЬ ===================== */
-  // link: '' — карточка будет «Скоро». Добавьте ссылку, когда проект выйдет.
-  const PROJECTS = [
-    { title: 'PolyGlot — переводчик', cat: 'Сайты', icon: '🌐', c1: '#6366f1', c2: '#a855f7',
-      desc: 'Переводчик на 5 языков: русский, английский, казахский, немецкий и испанский. Стеклянный интерфейс, авто-перевод и 20 направлений.',
-      tags: ['HTML', 'Tailwind', 'JS', 'API'], link: 'translator.html' },
-  ];
-  /* ============================================================== */
-
-  const $ = s => document.querySelector(s);
-  $('#year').textContent = new Date().getFullYear();
-
-  // ---- projects render
-  const cats = ['Все', ...new Set(PROJECTS.map(p => p.cat))];
-  $('#filters').innerHTML = cats.map((c, i) => `<button class="chip ${i ? '' : 'on'}" data-c="${c}">${c}</button>`).join('');
-  $('#grid').innerHTML = PROJECTS.map(p => {
-    const tag = p.link ? 'a' : 'div';
-    const attrs = p.link ? `href="${p.link}" target="_blank" rel="noopener"` : '';
-    return `<${tag} class="card" data-c="${p.cat}" ${attrs} style="--c1:${p.c1};--c2:${p.c2};--c:${p.c1}">
-      ${p.link ? '' : '<span class="soon">Скоро</span>'}
-      <div class="ico">${p.icon}</div>
-      <h3>${p.title}</h3><p>${p.desc}</p>
-      <div class="tags">${p.tags.map(t => `<span>${t}</span>`).join('')}</div>
-      ${p.link ? '<div class="go">Открыть проект <i>→</i></div>' : ''}
-    </${tag}>`;
-  }).join('');
-
-  const cards = [...document.querySelectorAll('.card')];
-  $('#filters').addEventListener('click', e => {
-    const b = e.target.closest('.chip'); if (!b) return;
-    document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b));
-    cards.forEach(c => {
-      const show = b.dataset.c === 'Все' || c.dataset.c === b.dataset.c;
-      c.classList.toggle('hide', !show);
-      c.classList.remove('in'); if (show) requestAnimationFrame(() => requestAnimationFrame(() => c.classList.add('in')));
-    });
-  });
-
-  // ---- 3D tilt + spotlight
-  cards.forEach(c => {
-    c.addEventListener('mousemove', e => {
-      const r = c.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-      c.style.setProperty('--mx', x + 'px'); c.style.setProperty('--my', y + 'px');
-      const rx = ((y / r.height) - .5) * -8, ry = ((x / r.width) - .5) * 8;
-      c.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-6px)`;
-    });
-    c.addEventListener('mouseleave', () => { c.style.transform = ''; });
-  });
-
-  // ---- scroll reveal
-  const io = new IntersectionObserver(es => es.forEach(e => {
-    if (!e.isIntersecting) return;
-    const el = e.target;
-    if (el.classList.contains('card')) el.style.transitionDelay = (cards.indexOf(el) % 3) * 90 + 'ms';
-    el.classList.add('in'); io.unobserve(el);
-    el.querySelectorAll?.('[data-count]').forEach(countUp);
-  }), { threshold: .15 });
-  document.querySelectorAll('.reveal, .card').forEach(el => io.observe(el));
-
-  function countUp(el) {
-    const end = +el.dataset.count, plus = el.dataset.plus; let n = 0;
-    const step = () => { n += Math.max(1, end / 50); if (n >= end) n = end; el.textContent = Math.round(n) + plus; if (n < end) requestAnimationFrame(step); };
-    step();
+(function () {
+  var PHONE = "77755092035";
+  var form = document.getElementById("briefForm"), link = document.getElementById("briefLink");
+  function update() {
+    var t = form.elements.type.value, w = form.elements.when.value;
+    var msg = "Здравствуйте! Хочу заказать сайт: " + t + ". Сроки: " + w + ".";
+    link.href = "https://wa.me/" + PHONE + "?text=" + encodeURIComponent(msg);
   }
-
-  // ---- cursor glow
-  const glow = $('#glow');
-  addEventListener('mousemove', e => { glow.style.left = e.clientX + 'px'; glow.style.top = e.clientY + 'px'; });
-
-  // ---- typewriter
-  const phrases = ['Делаю красивые сайты и игры.', 'Превращаю идеи в рабочие проекты.', 'Люблю анимации, стекло и детали.'];
-  const typed = $('#typed');
-  (async () => {
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    for (let i = 0; ; i++) {
-      const s = phrases[i % phrases.length];
-      for (let k = 1; k <= s.length; k++) { typed.textContent = s.slice(0, k); await sleep(50); }
-      await sleep(1800);
-      for (let k = s.length; k >= 0; k--) { typed.textContent = s.slice(0, k); await sleep(22); }
-      await sleep(300);
-    }
-  })();
-
-  // ---- floating stars / particles
-  const cv = $('#stars'), ctx = cv.getContext('2d');
-  let W, H, pts = [], mouse = { x: -999, y: -999 };
-  function size() {
-    W = cv.width = innerWidth; H = cv.height = innerHeight;
-    pts = Array.from({ length: Math.min(90, Math.floor(W * H / 16000)) }, () => ({
-      x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.4 + .3,
-      vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25 }));
-  }
-  addEventListener('resize', size); size();
-  addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-  (function loop() {
-    ctx.clearRect(0, 0, W, H);
-    for (const p of pts) {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0; if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-      const d = Math.hypot(p.x - mouse.x, p.y - mouse.y);
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7);
-      ctx.fillStyle = `rgba(200,210,255,${d < 140 ? .95 : .4})`; ctx.fill();
-      if (d < 140) { ctx.strokeStyle = `rgba(124,92,255,${1 - d / 140})`; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke(); }
-    }
-    requestAnimationFrame(loop);
-  })();
+  form.addEventListener("change", update); update();
+  document.getElementById("y").textContent = new Date().getFullYear();
 })();
 </script>
 </body>
 </html>
-
-
-
-
