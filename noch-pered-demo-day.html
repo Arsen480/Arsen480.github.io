@@ -1,0 +1,483 @@
+<title>Ночь перед Demo Day</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Golos+Text:wght@400;600&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: one-screen game — scene art on top, dialogue box below, HUD bar overlaid */
+:root{
+  --bg:#070b14; --panel:#0d1424; --line:#1e2a44; --fg:#e6ecf7; --muted:#8a98b5;
+  --cyan:#38e1ff; --pink:#ff3d81; --amber:#ffb347; --ok:#3ddc97;
+  --f-display:"Unbounded",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;overflow-x:hidden;-webkit-text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#app{position:relative;height:100%;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;gap:12px}
+.hud{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--f-mono);font-size:13px}
+.hud .clock{color:var(--amber);font-weight:700;font-size:15px;margin-right:auto}
+.stat{display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}
+.stat b{font-weight:700}
+.stat.up{animation:flash .6s}
+@keyframes flash{0%{border-color:var(--ok);box-shadow:0 0 12px var(--ok)}100%{}}
+.stat.down{animation:flashd .6s}
+@keyframes flashd{0%{border-color:var(--pink);box-shadow:0 0 12px var(--pink)}100%{}}
+.btn-ico{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:999px;padding:4px 12px;font:inherit;cursor:pointer}
+.btn-ico:focus-visible,.choice:focus-visible,.big:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stage{position:relative;flex:1 1 auto;min-height:180px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#04070d}
+.stage svg{position:absolute;inset:0;width:100%;height:100%}
+.stage::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
+.stage.glitch{animation:gl .5s steps(2) 2}
+@keyframes gl{0%{transform:translate(0)}25%{transform:translate(-6px,2px);filter:hue-rotate(90deg)}50%{transform:translate(5px,-3px)}75%{transform:translate(-2px,4px);filter:invert(.15)}100%{transform:none}}
+.box{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-height:190px;display:flex;flex-direction:column;gap:12px}
+.who{font-family:var(--f-display);font-weight:500;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.text{font-size:17px;line-height:1.55;max-width:70ch;min-height:3.1em;cursor:pointer}
+.text .mono{font-family:var(--f-mono);font-size:.9em;background:#05080f;border:1px solid var(--line);padding:1px 6px;border-radius:6px;color:var(--cyan)}
+.choices{display:grid;gap:8px}
+.choice{text-align:left;font:inherit;font-size:15px;color:var(--fg);background:#0a1120;border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;transition:border-color .15s,transform .15s}
+.choice:hover{border-color:var(--cyan);transform:translateX(4px)}
+.choice .k{font-family:var(--f-mono);color:var(--cyan);margin-right:8px}
+.next{align-self:flex-end;font-family:var(--f-mono);font-size:13px;color:var(--muted);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.3}}
+.ai-mark{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-align:center}
+
+/* title + ending overlays */
+.overlay{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+.card{margin-block:auto}
+.card{max-width:640px;width:100%;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-family:var(--f-mono);color:var(--amber);font-size:13px;letter-spacing:.12em}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(34px,7vw,64px);line-height:1;margin:0;text-wrap:balance;position:relative}
+h1 .g{color:var(--cyan);text-shadow:3px 0 var(--pink)}
+h2{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,5vw,40px);margin:0;text-wrap:balance}
+.lead{color:var(--muted);line-height:1.6;margin:0}
+.big{font-family:var(--f-display);font-weight:500;font-size:16px;background:var(--cyan);color:#041018;border:0;border-radius:12px;padding:14px 22px;cursor:pointer;align-self:flex-start}
+.big.alt{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.howto{font-size:14px;color:var(--muted);border-left:2px solid var(--line);padding-left:12px;line-height:1.6}
+.lessons{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;line-height:1.6}
+.lessons h3{margin:0 0 6px;font-family:var(--f-mono);font-size:13px;color:var(--ok);letter-spacing:.1em}
+.lessons ul{margin:0;padding-left:18px}
+.found{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.found span{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:6px;margin:2px}
+.found span.on{color:var(--ok);border-color:var(--ok)}
+@media (max-width:760px),(max-height:620px){
+  #app{height:auto;min-height:100%}
+  .stage{flex:none;aspect-ratio:16/10;min-height:0;width:100%}
+}
+@media (max-width:560px){.text{font-size:15.5px}.box{min-height:0;padding:14px}.choice{font-size:15px;padding:12px}.hud{font-size:12px;gap:6px}.stat{padding:3px 8px}}
+@media (hover:none){.choice:hover{transform:none;border-color:var(--line)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app">
+  <div class="hud">
+    <span class="clock" id="clock">22:47</span>
+    <span class="stat" id="s-sec">🛡 Защита <b>0</b></span>
+    <span class="stat" id="s-trust">🤝 Доверие <b>0</b></span>
+    <button class="btn-ico" id="snd" aria-label="Звук">🔇 Звук</button>
+  </div>
+  <div class="stage" id="stage"></div>
+  <div class="box">
+    <div class="who" id="who"></div>
+    <div class="text" id="text"></div>
+    <div class="choices" id="choices"></div>
+  </div>
+  <div class="ai-mark">Создано с помощью ИИ · AI Content Creators Challenge 2026</div>
+
+  <div class="overlay" id="title">
+    <div class="card">
+      <div class="eyebrow">ВИЗУАЛЬНАЯ НОВЕЛЛА · 5–10 МИНУТ</div>
+      <h1>Ночь перед <span class="g">Demo&nbsp;Day</span></h1>
+      <p class="lead">22:47. Ты один в компьютерном классе, доделываешь проект к завтрашнему конкурсу. На школьном сервере лежат работы всех участников. И кто-то только что вошёл в систему с чужого устройства.</p>
+      <div class="howto">Нажимай на текст, чтобы листать. Выбирай действия: от них зависят 🛡 защита сервера, 🤝 доверие друга и одна из 4 концовок.</div>
+      <div class="row">
+        <button class="big" id="start">Начать смену</button>
+        <button class="big alt" id="start-snd">Начать со звуком 🔊</button>
+      </div>
+      <div class="found" id="found-title"></div>
+    </div>
+  </div>
+  <div class="overlay" id="end" hidden>
+    <div class="card">
+      <div class="eyebrow" id="end-eye">КОНЦОВКА</div>
+      <h2 id="end-title"></h2>
+      <p class="lead" id="end-text"></p>
+      <div class="lessons"><h3>ЧТО ПРИГОДИТСЯ В ЖИЗНИ</h3><ul id="end-lessons"></ul></div>
+      <div class="found" id="found-end"></div>
+      <div class="row"><button class="big" id="again">Сыграть ещё раз</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- SCENE ART (SVG) ---------- */
+const skyline = (y,c)=>`
+ <g fill="${c}">
+  <rect x="40" y="${y-70}" width="50" height="70"/><rect x="100" y="${y-110}" width="36" height="110"/>
+  <rect x="150" y="${y-60}" width="60" height="60"/><rect x="560" y="${y-90}" width="44" height="90"/>
+  <rect x="620" y="${y-140}" width="30" height="140"/><rect x="665" y="${y-75}" width="70" height="75"/>
+  <path d="M250 ${y} L265 ${y-100} L280 ${y}Z"/><path d="M470 ${y} Q500 ${y-120} 530 ${y}Z"/>
+  <!-- Байтерек -->
+  <rect x="368" y="${y-150}" width="6" height="150"/><rect x="386" y="${y-150}" width="6" height="150"/>
+  <path d="M362 ${y-150} Q380 ${y-210} 398 ${y-150}Z"/>
+ </g>
+ <circle cx="380" cy="${y-176}" r="14" fill="#ffcf5a" opacity=".9"/>`;
+
+const monitor=(x,y,w,h,glow,inner='')=>`
+ <g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#0b1222" stroke="#24324f" stroke-width="3"/>
+ <rect x="${x+6}" y="${y+6}" width="${w-12}" height="${h-12}" rx="3" fill="${glow}" opacity=".18"/>${inner}
+ <rect x="${x+w/2-8}" y="${y+h}" width="16" height="14" fill="#1a2440"/><rect x="${x+w/2-30}" y="${y+h+14}" width="60" height="5" rx="2" fill="#1a2440"/></g>`;
+
+const codeLines=(x,y,n,c)=>Array.from({length:n},(_,i)=>`<rect x="${x+(i%3)*8}" y="${y+i*9}" width="${30+((i*37)%60)}" height="4" rx="2" fill="${c}" opacity=".75"/>`).join('');
+
+const ART={
+ lab:()=>`<svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1840"/><stop offset="1" stop-color="#1b1446"/></linearGradient></defs>
+  <rect width="800" height="400" fill="#070b14"/>
+  <rect x="80" y="30" width="640" height="200" fill="url(#sky)"/>
+  ${[...Array(30)].map((_,i)=>`<circle cx="${90+(i*53)%620}" cy="${40+(i*29)%90}" r="1.2" fill="#fff" opacity="${.3+(i%4)/6}"/>`).join('')}
+  ${skyline(230,'#0a1030')}
+  <rect x="80" y="30" width="640" height="200" fill="none" stroke="#1a2440" stroke-width="8"/><rect x="396" y="30" width="8" height="200" fill="#1a2440"/>
+  <rect x="0" y="300" width="800" height="100" fill="#0c1324"/><rect x="0" y="296" width="800" height="6" fill="#1d2945"/>
+  ${monitor(110,200,150,96,'#38e1ff',codeLines(124,214,8,'#38e1ff'))}
+  ${monitor(325,190,170,106,'#3ddc97',codeLines(340,206,9,'#3ddc97'))}
+  ${monitor(560,200,150,96,'#38e1ff',codeLines(574,214,8,'#7aa2ff'))}
+  <rect x="300" y="345" width="200" height="14" rx="4" fill="#17213b"/>
+ </svg>`,
+ mail:()=>`<svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <rect width="800" height="400" fill="#0a1120"/>
+  <rect x="120" y="40" width="560" height="320" rx="12" fill="#f3f6fb"/>
+  <rect x="120" y="40" width="560" height="40" rx="12" fill="#dfe6f2"/>
+  <circle cx="145" cy="60" r="6" fill="#ff5f57"/><circle cx="165" cy="60" r="6" fill="#febc2e"/><circle cx="185" cy="60" r="6" fill="#28c840"/>
+  <text x="150" y="115" font-family="JetBrains Mono,monospace" font-size="15" fill="#5b6780">От: admin@schoo<tspan fill="#ff3d81" font-weight="700" text-decoration="underline">1</tspan>-astana.kz</text>
+  <text x="150" y="150" font-family="Golos Text,sans-serif" font-weight="600" font-size="22" fill="#0b1222">⚠ СРОЧНО: аккаунт будет заблокирован!</text>
+  <text x="150" y="190" font-family="Golos Text,sans-serif" font-size="16" fill="#334">Подтвердите пароль в течение 10 минут,</text>
+  <text x="150" y="214" font-family="Golos Text,sans-serif" font-size="16" fill="#334">иначе все ваши проекты будут удалены.</text>
+  <rect x="150" y="250" width="230" height="46" rx="8" fill="#2563eb"/>
+  <text x="265" y="279" text-anchor="middle" font-family="Golos Text,sans-serif" font-weight="600" font-size="16" fill="#fff">Подтвердить пароль</text>
+ </svg>`,
+ null:()=>`<svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <rect width="800" height="400" fill="#05020a"/>
+  ${[...Array(24)].map((_,i)=>`<rect x="0" y="${i*17}" width="800" height="${(i*7)%5+1}" fill="#ff3d81" opacity="${(i%5)/40}"/>`).join('')}
+  <g transform="translate(400 190)">
+   <path d="M-90 -110 Q0 -150 90 -110 L80 40 Q0 120 -80 40Z" fill="#12091c" stroke="#ff3d81" stroke-width="3"/>
+   <path d="M-60 -30 L-20 -20 L-60 -5Z" fill="#38e1ff"/><path d="M60 -30 L20 -20 L60 -5Z" fill="#38e1ff"/>
+   <path d="M-40 45 Q0 70 40 45" fill="none" stroke="#ff3d81" stroke-width="4"/>
+  </g>
+  <text x="400" y="370" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="34" fill="#ff3d81" letter-spacing="10">NULL</text>
+ </svg>`,
+ phone:()=>`<svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <rect width="800" height="400" fill="#0a1120"/>
+  <circle cx="400" cy="200" r="150" fill="#38e1ff" opacity=".06"/><circle cx="400" cy="200" r="100" fill="#38e1ff" opacity=".08"/>
+  <rect x="320" y="40" width="160" height="320" rx="24" fill="#111a2e" stroke="#2c3b5e" stroke-width="4"/>
+  <circle cx="400" cy="140" r="42" fill="#2a3a63"/><circle cx="400" cy="128" r="16" fill="#9fb3d9"/><path d="M372 168 Q400 140 428 168Z" fill="#9fb3d9"/>
+  <text x="400" y="215" text-anchor="middle" font-family="Golos Text,sans-serif" font-weight="600" font-size="20" fill="#e6ecf7">Дамир</text>
+  <text x="400" y="240" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="13" fill="#8a98b5">вызов…</text>
+  <circle cx="360" cy="310" r="20" fill="#ff3d81"/><circle cx="440" cy="310" r="20" fill="#3ddc97"/>
+ </svg>`,
+ server:()=>`<svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <rect width="800" height="400" fill="#060a12"/>
+  ${[0,1,2,3,4].map(r=>`<g transform="translate(${70+r*140} 40)"><rect width="110" height="320" rx="6" fill="#0d1526" stroke="#1f2c4a" stroke-width="3"/>
+   ${[...Array(10)].map((_,i)=>`<rect x="10" y="${12+i*30}" width="90" height="22" rx="3" fill="#111d33"/>
+   <circle cx="22" cy="${23+i*30}" r="3" fill="${(i+r)%4? '#3ddc97':'#ffb347'}"><animate attributeName="opacity" values="1;.2;1" dur="${.6+((i*r)%5)/4}s" repeatCount="indefinite"/></circle>
+   <rect x="34" y="${21+i*30}" width="${30+(i*13+r*7)%40}" height="3" fill="#2a3a63"/>`).join('')}</g>`).join('')}
+ </svg>`,
+ riddle:()=>`<svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <rect width="800" height="400" fill="#05020a"/>
+  <rect x="140" y="60" width="520" height="280" rx="10" fill="#0b0614" stroke="#ff3d81" stroke-width="2"/>
+  <text x="170" y="110" font-family="JetBrains Mono,monospace" font-size="18" fill="#ff3d81">NULL&gt; ЗАГАДКА #1</text>
+  <text x="170" y="160" font-family="JetBrains Mono,monospace" font-size="16" fill="#e6ecf7">какой пароль я взломаю</text>
+  <text x="170" y="186" font-family="JetBrains Mono,monospace" font-size="16" fill="#e6ecf7">дольше всего?</text>
+  <text x="170" y="240" font-family="JetBrains Mono,monospace" font-size="16" fill="#38e1ff">A) Astana2026</text>
+  <text x="170" y="266" font-family="JetBrains Mono,monospace" font-size="16" fill="#38e1ff">B) qwerty123456</text>
+  <text x="170" y="292" font-family="JetBrains Mono,monospace" font-size="16" fill="#38e1ff">C) кот-шахмат!ТАНЕЦ-7</text>
+  <rect x="170" y="310" width="12" height="18" fill="#ff3d81"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/></rect>
+ </svg>`,
+ dark:()=>`<svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <rect width="800" height="400" fill="#020306"/>
+  ${monitor(325,150,170,106,'#ff3d81',`<text x="410" y="210" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="15" fill="#ff3d81">ФАЙЛЫ ЗАШИФРОВАНЫ</text>`)}
+ </svg>`,
+ desk:()=>`<svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <rect width="800" height="400" fill="#070b14"/>
+  <ellipse cx="400" cy="120" rx="260" ry="90" fill="#38e1ff" opacity=".05"/>
+  <path d="M0 230 L800 230 L800 400 L0 400Z" fill="#141d33"/><rect y="226" width="800" height="6" fill="#22304f"/>
+  <g transform="translate(330 270) rotate(-12)">
+   <rect width="150" height="54" rx="8" fill="#1d2a48" stroke="#38e1ff" stroke-width="2"/>
+   <rect x="150" y="14" width="34" height="26" rx="2" fill="#9aa7bf"/><rect x="160" y="20" width="6" height="6" fill="#1d2a48"/><rect x="172" y="20" width="6" height="6" fill="#1d2a48"/>
+   <rect x="14" y="12" width="122" height="30" rx="3" fill="#ffe8a3"/>
+   <text x="75" y="32" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="700" font-size="11" fill="#b4232c">ОТВЕТЫ ОЛИМП.</text>
+  </g>
+  <circle cx="440" cy="300" r="120" fill="none" stroke="#ff3d81" stroke-width="2" stroke-dasharray="6 8" opacity=".6"><animateTransform attributeName="transform" type="rotate" from="0 440 300" to="360 440 300" dur="20s" repeatCount="indefinite"/></circle>
+ </svg>`,
+ morning:()=>`<svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="dawn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b3a8a"/><stop offset=".6" stop-color="#ff8f6b"/><stop offset="1" stop-color="#ffcf5a"/></linearGradient></defs>
+  <rect width="800" height="400" fill="url(#dawn)"/>
+  <circle cx="400" cy="300" r="70" fill="#fff3c4" opacity=".9"/>
+  ${skyline(330,'#1a1640')}
+  <rect y="330" width="800" height="70" fill="#141032"/>
+ </svg>`
+};
+
+/* ---------- STORY ---------- */
+const C={me:'#e6ecf7',aiya:'#38e1ff',damir:'#3ddc97',null:'#ff3d81',nar:'#8a98b5'};
+const N={me:'Ты',aiya:'АЙЯ · школьный ИИ',damir:'Дамир',null:'NULL',nar:''};
+
+const S={
+ start:{art:'lab',t:'22:47',lines:[
+  ['nar','Компьютерный класс пуст. За окном горит Байтерек, в коридоре тихо гудит вентиляция.'],
+  ['me','Ещё чуть-чуть, и мой проект к Demo Day готов…'],
+  ['aiya','Внимание. В систему школы выполнен вход с неизвестного устройства. Учётная запись: <span class="mono">server-admin</span>.'],
+  ['me','Чего? В одиннадцатом часу ночи?']],
+  choices:[
+   {t:'Открыть журнал входов и проверить, что происходит',fx:{sec:1},go:'log'},
+   {t:'Наверное, учитель из дома зашёл. Доделаю проект',fx:{sec:-1},go:'mail'}]},
+ log:{art:'lab',t:'22:52',lines:[
+  ['aiya','Вход из другой страны, 3 неудачные попытки пароля, потом успешная. Это не похоже на учителя.'],
+  ['me','Окей, это реально подозрительно. Запомню.']],go:'mail'},
+ mail:{art:'mail',t:'23:01',lines:[
+  ['nar','На почту падает письмо. Красный восклицательный знак, слово «СРОЧНО».'],
+  ['aiya','Письмо от «администрации». Требует подтвердить пароль за 10 минут.']],
+  choices:[
+   {t:'Нажать «Подтвердить пароль», вдруг правда заблокируют',fx:{sec:-2},flag:'phished',go:'phish'},
+   {t:'Присмотреться к адресу отправителя',fx:{sec:2},go:'spot'},
+   {t:'Скинуть скрин Дамиру и спросить, что он думает',fx:{trust:1,sec:1},flag:'askedDamir',go:'damirMail'}]},
+ phish:{art:'dark',t:'23:03',glitch:true,lines:[
+  ['nar','Ты вводишь пароль. Страница моргает и показывает ошибку 404.'],
+  ['null','спасибо за пароль 🙂'],
+  ['me','Нет-нет-нет…']],
+  choices:[
+   {t:'Срочно сменить пароль и выйти со всех устройств',fx:{sec:1},go:'call'},
+   {t:'Выдернуть компьютер из розетки',fx:{},go:'unplug'}]},
+ unplug:{art:'dark',t:'23:06',lines:[
+  ['aiya','Твой компьютер выключен, но пароль уже у злоумышленника. Он входит с другого устройства.'],
+  ['me','Ладно, выключение не спасает. Надо менять пароль.']],go:'call'},
+ spot:{art:'mail',t:'23:03',lines:[
+  ['me','Стоп. <span class="mono">schoo1</span>… тут вместо буквы «l» стоит цифра «1»!'],
+  ['aiya','Верно. Это фишинг: поддельный адрес, давление временем и просьба ввести пароль. Настоящая администрация так не пишет.'],
+  ['me','Удаляю. Не сегодня.']],go:'call'},
+ damirMail:{art:'phone',t:'23:04',lines:[
+  ['damir','Бро, глянь на адрес. Там «schoo1» через единицу. Это развод, не жми.'],
+  ['me','Точно! Спасибо, ты лучший.'],
+  ['damir','Я всё равно не сплю, этюд решаю. Если что, пиши.']],go:'call'},
+ call:{art:'null',t:'23:20',glitch:true,lines:[
+  ['nar','Все три монитора одновременно гаснут. На них появляется маска.'],
+  ['null','Добрый вечер. В 00:00 я зашифрую сервер с проектами Demo Day. Все работы всех участников.'],
+  ['null','Но я люблю игры. Хочешь сыграть?']],
+  choices:[
+   {t:'Ответить NULL: «Давай. Что за игра?»',fx:{},go:'riddle'},
+   {t:'Позвонить Дамиру: вдвоём быстрее',fx:{trust:2},flag:'team',go:'team'},
+   {t:'Никому не звонить, справлюсь сам',fx:{trust:-2},go:'solo'}]},
+ riddle:{art:'riddle',t:'23:24',lines:[
+  ['null','Загадка. Какой пароль я буду взламывать дольше всего?']],
+  choices:[
+   {t:'A) Astana2026',fx:{sec:-1},go:'riddleBad'},
+   {t:'B) qwerty123456',fx:{sec:-1},go:'riddleBad'},
+   {t:'C) кот-шахмат!ТАНЕЦ-7',fx:{sec:2},flag:'respect',go:'riddleOk'}]},
+ riddleBad:{art:'riddle',t:'23:27',lines:[
+  ['null','Мимо. Город с годом и клавиатурная дорожка ломаются по словарю за секунды.'],
+  ['aiya','Надёжный пароль длинный: несколько случайных слов, регистр, символы. Например, фраза из 4 слов.'],
+  ['me','Учту. Время уходит, надо действовать.']],go:'accounts'},
+ riddleOk:{art:'riddle',t:'23:27',lines:[
+  ['null','Хм. Длинная фраза из случайных слов. Такую подбирать годами. Неплохо.'],
+  ['null','Ты первый в этой школе, кто ответил правильно. Посмотрим, что дальше.']],go:'accounts'},
+ team:{art:'phone',t:'23:25',lines:[
+  ['damir','Алло? Что, NULL на всех мониторах? Серьёзно?'],
+  ['me','Серьёзно. Помоги, мне одному не успеть.'],
+  ['damir','Я подключусь удалённо. Ты займись сервером, я проверю, какие аккаунты он мог захватить.']],go:'accounts'},
+ solo:{art:'lab',t:'23:25',lines:[
+  ['me','Сам разберусь. Не хочу никого будить.'],
+  ['nar','Телефон вибрирует: Дамир пишет «ты онлайн? помощь нужна?». Ты не отвечаешь.'],
+  ['aiya','Одному будет тяжело. Но решать тебе.']],go:'accounts'},
+ accounts:{art:'lab',t:'23:31',lines:[
+  ['aiya','Проверяю учётные записи. Злоумышленник сменил пароли у 12 учителей и включил пересылку их почты на свой адрес.'],
+  ['me','То есть он читает письма учителей?'],
+  ['aiya','Да. И может написать родителям от имени школы.']],
+  choices:[
+   {t:'Сбросить пароли и включить двухфакторную защиту (вход с кодом из телефона)',fx:{sec:2},flag:'mfa',go:'mfa'},
+   {t:'Написать в чат учителей: почта взломана, ссылки не открывать',fx:{trust:1,sec:1},go:'warn'},
+   {t:'Не моя проблема, главное сервер',fx:{sec:-1},go:'usb'}]},
+ mfa:{art:'lab',t:'23:34',lines:[
+  ['aiya','Готово. Теперь даже с паролем в аккаунт не войти без кода из телефона владельца.'],
+  ['me','Пусть теперь попробует.']],go:'usb'},
+ warn:{art:'phone',t:'23:34',lines:[
+  ['nar','Через минуту в чате отвечает учитель информатики.'],
+  ['nar','«Спасибо, что написал! Уже еду в школу. Ничего лишнего не трогай».'],
+  ['aiya','Взрослый в курсе. Это правильно.']],go:'usb'},
+ usb:{art:'desk',t:'23:37',lines:[
+  ['nar','На соседней парте лежит флешка. На ней наклейка маркером: «ОТВЕТЫ ОЛИМПИАДА 2026».'],
+  ['me','Минуту назад её тут не было…'],
+  ['aiya','Эту флешку никто не регистрировал в школьной системе.']],
+  choices:[
+   {t:'Вставить в компьютер и посмотреть, что там',fx:{sec:-2},flag:'usbIn',go:'usbBad'},
+   {t:'Не трогать и отложить для учителя',fx:{sec:1},go:'usbOk'}]},
+ usbBad:{art:'dark',t:'23:38',glitch:true,lines:[
+  ['nar','На экране мелькает чёрное окно и сразу исчезает.'],
+  ['aiya','Флешка запустила скрипт, который пытался открыть злоумышленнику доступ к твоему компьютеру. Я его заблокировала, но в другой раз могу не успеть.'],
+  ['me','Понял. Чужие флешки больше не вставляю.']],go:'backup'},
+ usbOk:{art:'desk',t:'23:38',lines:[
+  ['nar','Ты кладёшь флешку в конверт и подписываешь: «Не вставлять!».'],
+  ['aiya','Правильно. Злоумышленники специально подкидывают флешки с интересными надписями, чтобы их вставили из любопытства.']],go:'backup'},
+ backup:{art:'server',t:'23:40',lines:[
+  ['nar','Серверная. Мигают десятки лампочек.'],
+  ['aiya','Последняя резервная копия проектов сделана три недели назад. До полуночи 20 минут.']],
+  choices:[
+   {t:'Сделать свежий бэкап на внешний диск',fx:{sec:2},flag:'backup',go:'backupDone'},
+   {t:'Отключить сервер от интернета',fx:{sec:1},flag:'offline',go:'offline'},
+   {t:'Положиться на антивирус, он же стоит',fx:{sec:-1},go:'antivirus'}]},
+ backupDone:{art:'server',t:'23:55',lines:[
+  ['aiya','Копирование 100%. Все проекты на внешнем диске. Диск отключён от компьютера.'],
+  ['me','Теперь, даже если он всё зашифрует, работы целы.']],go:'midnight'},
+ offline:{art:'server',t:'23:50',lines:[
+  ['aiya','Сервер отключён от сети. Злоумышленник потерял доступ, но копии проектов по-прежнему нет.'],
+  ['me','Хоть что-то. Лишь бы он не успел ничего запустить.']],go:'midnight'},
+ antivirus:{art:'server',t:'23:50',lines:[
+  ['aiya','Антивирус не видит угроз. У злоумышленника правильный пароль, для системы он обычный пользователь.'],
+  ['me','То есть антивирус ему даже не мешает…']],go:'midnight'},
+ midnight:{art:'null',t:'00:00',glitch:true,lines:[
+  ['null','Полночь.']],route:()=>{
+   if(F.respect && st.sec>=4) return 'reveal';
+   return 'attack';}},
+ reveal:{art:'null',t:'00:00',lines:[
+  ['null','…и ничего не будет. Я не собирался ничего шифровать.'],
+  ['null','Я выпускник этой школы. Учусь на кибербезопасности. Хотел показать, какая тут слабая защита.'],
+  ['me','Ты понимаешь, что лезть в чужую систему без разрешения незаконно? Даже с добрыми целями.'],
+  ['null','…Понимаю. Что ты предлагаешь?']],
+  choices:[
+   {t:'Предложить ему прийти утром и официально помочь школе с защитой',fx:{trust:1},go:'END_white'},
+   {t:'Сообщить обо всём администрации школы',fx:{sec:1},go:'END_hero'}]},
+ attack:{art:'dark',t:'00:01',glitch:true,lines:[
+  ['nar','Экраны вспыхивают красным. Файлы на сервере один за другим получают расширение <span class="mono">.null</span>.']],
+  route:()=>{
+   if(F.backup||F.offline&&!F.phished) return st.trust>=1?'saved':'lone';
+   return 'END_lost';}},
+ saved:{art:'morning',t:'08:00',lines:[
+  ['nar','Утро. Ты почти не спал.'],
+  ['damir','Ну что, живы проекты?'],
+  ['me','Живы. Всё восстановили. Сервер почистят, пароли сменят.']],go:'END_hero'},
+ lone:{art:'morning',t:'08:00',lines:[
+  ['nar','Утро. Проекты спасены, но ты сделал всё один и еле стоишь на ногах.'],
+  ['damir','Мог бы и написать. Я ж предлагал.'],
+  ['me','…Да. Мог бы.']],go:'END_lone'}
+};
+
+const ENDS={
+ END_white:{eye:'КОНЦОВКА 1 ИЗ 4 · РЕДКАЯ',title:'Белая шляпа',
+  text:'Утром NULL приходит к директору сам. Он рассказывает про все дыры в защите, и школа приглашает его провести урок по кибербезопасности. На Demo Day все проекты на месте.',
+  lessons:['Взламывать чужие системы без разрешения незаконно, даже «ради проверки».','Этичные хакеры (white hat) ищут уязвимости только по договорённости с владельцем.','Длинная фраза из случайных слов надёжнее короткого пароля с цифрами.']},
+ END_hero:{eye:'КОНЦОВКА 2 ИЗ 4',title:'Герой Demo Day',
+  text:'Сервер спасён, проекты целы, администрация знает о взломе. На открытии Demo Day директор благодарит тебя со сцены. А Дамир говорит, что вы отличная команда.',
+  lessons:['Бэкап, отключённый от компьютера, спасает от вирусов-шифровальщиков.','Подозрительный вход нужно сразу проверять и сообщать взрослым.','Команда справляется с проблемой быстрее одного человека.']},
+ END_lone:{eye:'КОНЦОВКА 3 ИЗ 4',title:'Одинокий волк',
+  text:'Ты спас сервер, но никого не позвал на помощь и проигнорировал друга. Проекты целы, а вот на Demo Day ты засыпаешь прямо на защите.',
+  lessons:['Просить помощи нормально, это не слабость.','Отключение от сети останавливает атаку, но без бэкапа данные под угрозой.','Безопасность это работа команды, а не одного героя.']},
+ END_lost:{eye:'КОНЦОВКА 4 ИЗ 4',title:'Тишина на экранах',
+  text:'К утру все проекты зашифрованы. Свежей копии нет. Demo Day переносят, а участникам приходится восстанавливать работы по памяти.',
+  lessons:['Фишинговое письмо давит срочностью и просит пароль. Проверяй адрес отправителя.','Антивирус не поможет, если у злоумышленника правильный пароль.','Делай резервные копии регулярно и храни их отдельно.']}
+};
+
+/* ---------- ENGINE ---------- */
+let st,F,cur,li,typing,timer,full;
+const $=id=>document.getElementById(id);
+function load(){try{return JSON.parse(localStorage.getItem('ndd-ends')||'[]')}catch(e){return []}}
+function save(a){try{localStorage.setItem('ndd-ends',JSON.stringify(a))}catch(e){}}
+function foundHTML(){const f=load();return 'Найдено концовок: '+f.length+' / 4 '+Object.keys(ENDS).map(k=>`<span class="${f.includes(k)?'on':''}">${f.includes(k)?ENDS[k].title:'???'}</span>`).join('')}
+
+function hud(d){
+ $('s-sec').querySelector('b').textContent=st.sec;$('s-trust').querySelector('b').textContent=st.trust;
+ if(d){for(const k of ['sec','trust'])if(d[k]){const el=$('s-'+k);el.classList.remove('up','down');void el.offsetWidth;el.classList.add(d[k]>0?'up':'down')}}
+}
+function go(id){
+ if(id.startsWith('END_'))return ending(id);
+ cur=S[id];li=0;
+ if(window.scrollY>0)window.scrollTo({top:0,behavior:'smooth'});
+ $('stage').innerHTML=ART[cur.art]();
+ $('clock').textContent=cur.t;
+ if(cur.glitch){$('stage').classList.remove('glitch');void $('stage').offsetWidth;$('stage').classList.add('glitch');Snd.glitch()}
+ Snd.mood(cur.art==='null'||cur.art==='dark'||cur.art==='riddle'?'tense':cur.art==='morning'?'calm':'night');
+ showLine();
+}
+function showLine(){
+ const [who,txt]=cur.lines[li];
+ $('who').textContent=N[who];$('who').style.color=C[who];
+ $('choices').innerHTML='';
+ full=txt;typing=true;const el=$('text');el.innerHTML='';
+ const plain=txt.replace(/<[^>]+>/g,'');let i=0;clearInterval(timer);
+ timer=setInterval(()=>{i+=2;el.textContent=plain.slice(0,i);if(i%6===0)Snd.tick();if(i>=plain.length)finishType()},22);
+}
+function finishType(){clearInterval(timer);typing=false;$('text').innerHTML=full;afterLine()}
+function afterLine(){
+ const box=$('choices');
+ if(li<cur.lines.length-1){box.innerHTML='<div class="next">нажми, чтобы продолжить ▸</div>';return}
+ if(cur.choices){
+  box.innerHTML=cur.choices.map((c,i)=>`<button class="choice" data-i="${i}"><span class="k">${i+1}</span>${c.t}</button>`).join('');
+  box.querySelectorAll('.choice').forEach(b=>b.onclick=e=>{e.stopPropagation();pick(cur.choices[+b.dataset.i])});
+ } else box.innerHTML='<div class="next">дальше ▸</div>';
+}
+function advance(){
+ if(typing)return finishType();
+ if(li<cur.lines.length-1){li++;return showLine()}
+ if(cur.choices)return;
+ Snd.click();go(cur.route?cur.route():cur.go);
+}
+function pick(c){
+ Snd.click();
+ for(const k in c.fx)st[k]+=c.fx[k];
+ if(c.flag)F[c.flag]=true;
+ hud(c.fx);go(c.go);
+}
+function ending(id){
+ const e=ENDS[id];const f=load();if(!f.includes(id)){f.push(id);save(f)}
+ $('end-eye').textContent=e.eye;$('end-title').textContent=e.title;$('end-text').textContent=e.text;
+ $('end-lessons').innerHTML=e.lessons.map(l=>`<li>${l}</li>`).join('');
+ $('found-end').innerHTML=foundHTML()+`<br>Итог: 🛡 ${st.sec} · 🤝 ${st.trust}`;
+ $('end').hidden=false;Snd.mood(id==='END_lost'?'tense':'calm');
+}
+function start(withSound){
+ st={sec:0,trust:0};F={};hud();
+ $('title').hidden=true;$('end').hidden=true;
+ if(withSound)Snd.on();
+ go('start');
+}
+$('text').onclick=advance;
+$('stage').onclick=advance;
+document.addEventListener('keydown',e=>{
+ if(!$('title').hidden||!$('end').hidden)return;
+ if(e.key===' '||e.key==='Enter'){e.preventDefault();advance()}
+ const n=+e.key;if(n&&cur&&cur.choices&&!typing&&li===cur.lines.length-1&&cur.choices[n-1])pick(cur.choices[n-1]);
+});
+$('start').onclick=()=>start(false);
+$('start-snd').onclick=()=>start(true);
+$('again').onclick=()=>{$('end').hidden=true;$('title').hidden=false;$('found-title').innerHTML=foundHTML()};
+$('snd').onclick=()=>Snd.enabled?Snd.off():Snd.on();
+$('found-title').innerHTML=foundHTML();
+
+/* ---------- MUSIC (Web Audio, генерируется кодом) ---------- */
+const Snd={enabled:false,ctx:null,master:null,loop:null,m:'night',
+ on(){try{if(!this.ctx){this.ctx=new (window.AudioContext||window.webkitAudioContext)();this.master=this.ctx.createGain();this.master.gain.value=.18;this.master.connect(this.ctx.destination)}
+  this.ctx.resume();this.enabled=true;$('snd').textContent='🔊 Звук';this.play()}catch(e){}},
+ off(){this.enabled=false;$('snd').textContent='🔇 Звук';clearInterval(this.loop);this.loop=null},
+ note(f,d,type='sine',v=.3,when=0){if(!this.enabled)return;const t=this.ctx.currentTime+when,o=this.ctx.createOscillator(),g=this.ctx.createGain();
+  o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.03);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  o.connect(g);g.connect(this.master);o.start(t);o.stop(t+d+.05)},
+ scales:{night:[220,261.6,329.6,392,440,523.3],tense:[196,207.7,261.6,277.2,311.1,392],calm:[261.6,329.6,392,440,523.3,659.3]},
+ play(){clearInterval(this.loop);if(!this.enabled)return;let step=0;
+  this.loop=setInterval(()=>{const sc=this.scales[this.m];
+   if(step%8===0)this.note(sc[0]/2,2.4,'triangle',.35);
+   this.note(sc[(step*3+(step>>2))%sc.length],.5,this.m==='tense'?'sawtooth':'sine',this.m==='tense'?.06:.12);
+   step++},this.m==='tense'?220:330)},
+ mood(m){if(this.m!==m){this.m=m;if(this.enabled)this.play()}},
+ tick(){this.note(1800,.03,'square',.02)},
+ click(){this.note(660,.08,'square',.08)},
+ glitch(){if(!this.enabled)return;for(let i=0;i<6;i++)this.note(100+Math.random()*900,.06,'sawtooth',.1,i*.05)}
+};
+</script>
